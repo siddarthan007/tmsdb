@@ -691,15 +691,20 @@ def getHalls():
             existing_end_min = existing_start_min + int(existing_len_min)
             if new_start_min < existing_end_min and new_end_min > existing_start_min:
                 unavailable_halls.add(hall_id)
-        all_halls_query = "SELECT DISTINCT hall_id FROM halls"
+        all_halls_query = "SELECT DISTINCT hall_id, hall_name FROM halls"
         all_halls_results = runQuery(all_halls_query)
         if all_halls_results is None:
             return render_bulma_notification('Error retrieving list of halls.', 'is-danger')
-        all_hall_ids = {row[0] for row in all_halls_results}
-        available_halls = all_hall_ids.difference(unavailable_halls)
-        if not available_halls:
+        all_halls = { (row[0], row[1]) for row in all_halls_results }
+        available_halls_data = []
+        for hall_id, hall_name in all_halls:
+            if hall_id not in unavailable_halls:
+                available_halls_data.append({"id": hall_id, "name": hall_name})
+
+        if not available_halls_data:
             return render_bulma_notification('No Halls Available On Given Date And Time Slot', 'is-info')
-        sorted_available_halls = sorted(list(available_halls))
+        
+        sorted_available_halls = sorted(available_halls_data, key=lambda x: x['id'])
         return render_template('availableHalls.html', halls=sorted_available_halls)
     except ValueError:
         return render_bulma_notification('Invalid numeric input for Movie ID or Time.', 'is-danger')
@@ -830,12 +835,14 @@ def getBookingsByDate():
             s.show_id,
             m.movie_name,
             s.time,
+            h.hall_name,
             COUNT(bt.ticket_no) as num_tickets
         FROM booked_tickets bt
         JOIN shows s ON bt.show_id = s.show_id
         JOIN movies m ON s.movie_id = m.movie_id
+        JOIN halls h ON s.hall_id = h.hall_id -- Join still needed for name
         WHERE s.Date = %s
-        GROUP BY bt.booking_ref, bt.customer_name, bt.customer_phone, s.show_id, m.movie_name, s.time
+        GROUP BY bt.booking_ref, bt.customer_name, bt.customer_phone, s.show_id, m.movie_name, s.time, h.hall_name
         ORDER BY s.time, bt.booking_ref
     """
 
@@ -848,7 +855,7 @@ def getBookingsByDate():
 
     bookings_formatted = []
     for row in results:
-        booking_ref, cust_name, cust_phone, show_id, movie_name, time_int, num_tickets = row
+        booking_ref, cust_name, cust_phone, show_id, movie_name, time_int, hall_name, num_tickets = row
         hour, minute_str = format_time_tuple(time_int)
         show_time_formatted = f"{hour}:{minute_str}" if hour is not None else "N/A"
         bookings_formatted.append({
@@ -857,6 +864,7 @@ def getBookingsByDate():
             "customer_phone": cust_phone if cust_phone else "N/A",
             "movie_name": movie_name,
             "show_time": show_time_formatted,
+            "hall_name": hall_name,
             "num_tickets": num_tickets
         })
 
@@ -894,7 +902,7 @@ def show_ticket(booking_ref):
             bt.ticket_no, bt.seat_no, bt.customer_name, bt.customer_phone,
             s.Date, s.time, s.type as show_type, s.show_id,
             m.movie_name, m.length,
-            h.hall_id,
+            h.hall_id, h.hall_name,
             pl.price as base_standard_price
         FROM booked_tickets bt
         JOIN shows s ON bt.show_id = s.show_id
@@ -902,7 +910,7 @@ def show_ticket(booking_ref):
         JOIN halls h ON s.hall_id = h.hall_id
         LEFT JOIN price_listing pl ON s.price_id = pl.price_id
         WHERE bt.booking_ref = %s
-        GROUP BY bt.ticket_no, bt.seat_no, bt.customer_name, bt.customer_phone, s.Date, s.time, s.type, s.show_id, m.movie_name, m.length, h.hall_id, pl.price
+        GROUP BY bt.ticket_no, bt.seat_no, bt.customer_name, bt.customer_phone, s.Date, s.time, s.type, s.show_id, m.movie_name, m.length, h.hall_id, h.hall_name, pl.price
         ORDER BY bt.seat_no
     """
 
@@ -923,7 +931,7 @@ def show_ticket(booking_ref):
 
     for row in results:
         (ticket_no, seat_db_no, cust_name, cust_phone, show_date, show_time_int,
-         show_type, show_id, movie_name, movie_len, hall_id, base_price) = row
+         show_type, show_id, movie_name, movie_len, hall_id, hall_name, base_price) = row
 
         if ticket_no in processed_ticket_nos:
             continue
@@ -935,7 +943,7 @@ def show_ticket(booking_ref):
                  "show_type": show_type,
                  "date": show_date.strftime('%Y-%m-%d') if show_date else "N/A",
                  "time": f"{hour}:{minute_str}" if hour is not None else "N/A",
-                 "hall_id": hall_id,
+                 "hall_name": hall_name,
                  "customer_name": cust_name,
                  "customer_phone": cust_phone,
                  "show_id": show_id
@@ -943,11 +951,11 @@ def show_ticket(booking_ref):
 
         seat_code_display = db_no_to_seat_code(seat_db_no)
 
-        seat_class = 'Standard'
+        seat_class = 'standard'
         seat_display_no = seat_db_no
         seat_price = base_price if base_price is not None else 0
         if seat_db_no > GOLD_SEAT_THRESHOLD:
-             seat_class = 'Gold'
+             seat_class = 'gold'
              seat_display_no = seat_db_no - GOLD_SEAT_THRESHOLD
              if base_price is not None:
                  seat_price = int(base_price * 1.5)

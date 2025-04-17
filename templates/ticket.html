@@ -27,11 +27,10 @@
             overflow: hidden;
             position: relative;
         }
-        /* Perforated line effect */
         .dark-ticket-body .ticket-card::before {
             content: '';
             position: absolute;
-            left: 40px; /* Adjust position */
+            left: 40px; 
             top: 0;
             bottom: 0;
             width: 2px;
@@ -46,9 +45,9 @@
 
 
         .dark-ticket-body .card-header {
-            background: transparent; /* Header integrated */
-            padding: 1.5rem 1.5rem 0.5rem 1.5rem; /* Adjust padding */
-            border-bottom: none; /* Remove border */
+            background: transparent; 
+            padding: 1.5rem 1.5rem 0.5rem 1.5rem; 
+            border-bottom: none;
             text-align: center;
         }
 
@@ -61,13 +60,13 @@
             display: block;
             padding-bottom: 0.5rem;
         }
-        .dark-ticket-body .card-header-icon { /* Style for icon if added */
+        .dark-ticket-body .card-header-icon { 
              color: #ffcc00;
              font-size: 1.5rem;
         }
 
         .dark-ticket-body .ticket-card .card-content {
-            padding: 1.5rem 1.5rem 1.5rem calc(40px + 1.5rem); /* Padding left accounts for stub line */
+            padding: 1.5rem 1.5rem 1.5rem calc(40px + 1.5rem);
         }
 
 
@@ -94,7 +93,7 @@
         }
 
         .dark-ticket-body .table {
-            background-color: rgba(0,0,0,0.1); /* More subtle table bg */
+            background-color: rgba(0,0,0,0.1); 
             color: #e0e0e0;
             border-radius: 8px;
             overflow: hidden;
@@ -112,10 +111,10 @@
         }
 
         .dark-ticket-body .table tbody tr {
-             background-color: transparent !important; /* Remove stripes for cleaner look */
+             background-color: transparent !important; 
         }
         .dark-ticket-body .table tbody tr:hover {
-             background-color: rgba(255,255,255,0.05) !important; /* Subtle hover */
+             background-color: rgba(255,255,255,0.05) !important;
         }
 
 
@@ -138,7 +137,7 @@
         }
 
         .booking-ref-text {
-            color: #ffdd57 !important; /* Bulma yellow */
+            color: #ffdd57 !important; 
             font-weight: 700;
             letter-spacing: 1.5px;
         }
@@ -147,7 +146,7 @@
             font-size: 1.8rem !important;
             font-weight: 700;
             margin-bottom: 0.1rem !important;
-            color: #ffffff !important; /* Plain white might be better than gradient */
+            color: #ffffff !important;
             text-align: center;
         }
          .movie-subtitle {
@@ -174,7 +173,7 @@
         .qr-code-area img {
             background-color: white;
             padding: 8px;
-            max-width: 140px; /* Slightly smaller */
+            max-width: 140px; 
             height: auto;
             border-radius: 6px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -193,9 +192,9 @@
             font-size: 0.95rem;
         }
         .ticket-info-item .icon {
-            color: #7a7a7a; /* Icon color */
+            color: #7a7a7a; 
             margin-right: 0.75rem;
-            width: 20px; /* Align icons */
+            width: 20px;
             text-align: center;
         }
          .ticket-info-item strong {
@@ -205,7 +204,7 @@
 
         .ticket-details-section {
             margin-bottom: 1.5rem;
-            padding: 0; /* Remove padding here, use column padding */
+            padding: 0; 
         }
 
         .button.is-success {
@@ -238,7 +237,7 @@
              html, body { width: 100%; height: auto; }
              .no-print { display: none !important; }
              .ticket-card { border: 1px solid #ccc !important; box-shadow: none !important; margin: 0 !important; padding: 8mm !important; max-width: 100% !important; width: 100% !important; background-color: white !important; background: none !important; border-radius: 0 !important;}
-             .ticket-card::before { display: none; } /* Hide stub line for print */
+             .ticket-card::before { display: none; } 
              .card-header { background: none !important; border-bottom: 1px solid #ccc !important; padding: 0.5rem 0 !important; }
              .ticket-card .card-content { padding: 0.5rem 0 !important; }
              .ticket-card .title, .ticket-card .subtitle, .ticket-card p, .ticket-card li, .ticket-card strong, .ticket-card th, .ticket-card td { color: black !important; }
@@ -296,10 +295,10 @@
                              <span class="icon"><i class="fas fa-clock fa-fw"></i></span>
                               <strong>{{ data.show_info.time }}</strong>
                          </div>
-                          <div class="ticket-info-item">
-                             <span class="icon"><i class="fas fa-door-open fa-fw"></i></span>
-                             <strong>Hall {{ data.show_info.hall_id }}</strong>
-                         </div>
+                         <div class="ticket-info-item">
+                            <span class="icon"><i class="fas fa-door-open fa-fw"></i></span>
+                            <strong>{{ data.show_info.hall_name }}</strong> {# Display hall_name #}
+                        </div>
                          {% if data.show_info.customer_name %}
                          <div class="ticket-info-item mt-4">
                             <span class="icon"><i class="fas fa-user fa-fw"></i></span>
@@ -340,7 +339,7 @@
                             <tr>
                                 <td>
                                     <span class="icon is-small mr-1">
-                                        {% if ticket.class == 'Gold' %}
+                                        {% if ticket.class == 'gold' %}
                                             <i class="fas fa-star has-text-warning"></i>
                                         {% else %}
                                             <i class="fas fa-couch has-text-info"></i>

@@ -15,6 +15,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE halls (
     hall_id INT NOT NULL,
+    hall_name VARCHAR(50) NOT NULL,
     class VARCHAR(10) NOT NULL,
     no_of_seats INT NOT NULL,
     PRIMARY KEY (hall_id, class)
@@ -69,13 +70,13 @@ CREATE TABLE types (
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id) ON DELETE CASCADE
 );
 
-INSERT INTO halls (hall_id, class, no_of_seats) VALUES
-(1, 'gold', 35),
-(1, 'standard', 75),
-(2, 'gold', 27),
-(2, 'standard', 97),
-(3, 'gold', 26),
-(3, 'standard', 98);
+INSERT INTO halls (hall_id, hall_name, class, no_of_seats) VALUES
+(1, 'Audi 1', 'gold', 35),
+(1, 'Audi 1', 'standard', 75),
+(2, 'Audi 2', 'gold', 27),
+(2, 'Audi 2', 'standard', 97),
+(3, 'Audi 3', 'gold', 26),
+(3, 'Audi 3', 'standard', 98);
 
 INSERT INTO price_listing (price_id, type, day, price) VALUES
 (1, '2D', 'Monday', 210), (2, '3D', 'Monday', 295), (3, '4DX', 'Monday', 380),

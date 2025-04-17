@@ -1,9 +1,9 @@
-<h4 class="title is-4 has-text-centered mb-4 mt-4">Halls Available On Given Date And Time</h4>
+<h4 class="title is-4 has-text-centered mb-4 mt-4 has-text-light">Select Available Hall</h4>
 
 <div class="buttons is-centered mt-4 mb-4">
-    {% for hall_id in halls %}
-        <button class="button is-success" onclick="selectShowHall({{ hall_id }})">
-            Hall ID: {{ hall_id }}
+    {% for hall in halls %}
+        <button class="button is-success" onclick="selectShowHall({{ hall.id }})">
+            {{ hall.name }}
         </button>
     {% endfor %}
 </div>

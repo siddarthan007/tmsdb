@@ -3,7 +3,7 @@
 
     {% if bookings %}
     <div class="table-container">
-        <table class="table is-fullwidth is-bordered is-striped is-narrow is-hoverable is-dark is-size-6">
+        <table class="table is-fullwidth is-bordered is-striped is-narrow is-hoverable is-dark is-size-7">
             <thead>
                 <tr>
                     <th>Booking Ref</th>
@@ -11,6 +11,7 @@
                     <th>Phone</th>
                     <th>Movie</th>
                     <th>Show Time</th>
+                    <th>Hall</th>
                     <th># Tickets</th>
                     <th>Action</th>
                 </tr>
@@ -23,6 +24,7 @@
                     <td>{{ booking.customer_phone }}</td>
                     <td>{{ booking.movie_name }}</td>
                     <td>{{ booking.show_time }}</td>
+                    <td>{{ booking.hall_name }}</td>
                     <td class="has-text-centered">{{ booking.num_tickets }}</td>
                     <td class="has-text-centered">
                         <a href="{{ url_for('show_ticket', booking_ref=booking.booking_ref) }}" class="button is-info is-small" target="_blank" title="View E-Ticket">
