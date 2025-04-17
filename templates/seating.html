@@ -1,32 +1,59 @@
-<h4 class="title is-4 has-text-centered mb-5">Available Seats</h4> <div>
+<style>
+    .seat-layout { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .seat-row { display: flex; align-items: center; gap: 5px; }
+    .row-label { font-weight: bold; min-width: 20px; text-align: right; color: #ccc; }
+    .seat-button { min-width: 55px; /* Adjust as needed */ padding: 5px; font-size: 0.8rem; }
+    .screen { margin:auto; width: 80%; background-color: #555; color: white; text-align: center; padding: 5px 0; margin-bottom: 20px; border-radius: 3px; font-weight: bold; letter-spacing: 2px; }
+    .seat-section { margin-bottom: 30px; }
+    .seat-available { /* Already styled by Bulma is-light etc */ }
+    .seat-booked { /* Already styled by Bulma disabled */ }
+    .seat-selected { background-color: #48c78e !important; color: white !important; border-color: #3ec487 !important; }
+</style>
+
+<h4 class="title is-4 has-text-centered mb-5 has-text-light">Select Your Seats</h4>
+
+{% macro render_layout(layout, class_name, button_color) %}
+    <div class="seat-layout">
+        {% for row in layout %}
+            <div class="seat-row">
+                <div class="row-label">{{ row.letter }}</div>
+                {% for seat in row.seats %}
+                    <button
+                        class="button seat-button {{ button_color }} is-light"
+                        onclick="selectSeat('{{ seat.code }}', '{{ seat.class }}', {{ seat.db_no }})"
+                        id="seat-{{ seat.class }}-{{ seat.code }}"
+                        data-dbno="{{ seat.db_no }}"
+                        {% if seat.status == 'booked' %}disabled{% endif %}>
+                        {{ seat.code }}
+                    </button>
+                {% else %}
+                     <span class="seat-button">&nbsp;</span> {% endfor %}
+                 <div class="row-label">{{ row.letter }}</div> </div>
+        {% endfor %}
+    </div>
+{% endmacro %}
+
+{% if goldLayout %}
+<div class="seat-section">
     <h5 class="subtitle is-5 has-text-centered has-text-warning mb-3">
         <i class="fas fa-star mr-1"></i> Gold Class
     </h5>
-    <div class="buttons is-centered is-multiline">
-        {% for seat in goldSeats %}
-            <button class="button is-warning is-light"
-                    onclick="selectSeat({{ seat[0] }},'gold')"
-                    {% if seat[1] == 'disabled' %}disabled{% endif %}>
-                {{ seat[0] }}
-            </button>
-        {% endfor %}
-    </div>
+    {{ render_layout(goldLayout, 'gold', 'is-warning') }}
 </div>
+<hr class="has-background-grey-dark">
+{% endif %}
 
-<div class="mt-5"> <h5 class="subtitle is-5 has-text-centered mb-3">
+{% if standardLayout %}
+<div class="seat-section">
+    <h5 class="subtitle is-5 has-text-centered mb-3 has-text-info">
        <i class="fas fa-couch mr-1"></i> Standard Class
     </h5>
-    <div class="buttons is-centered is-multiline">
-        {% for seat in standardSeats %}
-            <button class="button is-info is-light"
-                    onclick="selectSeat({{ seat[0] }},'standard')"
-                    {% if seat[1] == 'disabled' %}disabled{% endif %}>
-                {{ seat[0] }}
-            </button>
-        {% endfor %}
-    </div>
+     {{ render_layout(standardLayout, 'standard', 'is-info') }}
 </div>
+{% endif %}
+
+<div class="screen">SCREEN</div>
 
 <div id="price-and-confirm" class="mt-5 content has-text-centered">
-    <p class="has-text-centered">Please select one or more seats.</p>
+    <p class="has-text-centered has-text-grey-light">Please select one or more seats.</p>
 </div>

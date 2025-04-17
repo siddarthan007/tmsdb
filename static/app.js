@@ -23,6 +23,8 @@ function logoutUser() {
 }
 
 function login() {
+    selectedSeats = [];
+    
     if (username === null) {
         username = $("input[name='username']").val();
         password = $("input[name='password']").val();
@@ -194,24 +196,24 @@ function getSeats() {
     });
 }
 
-function selectSeat(no, sclass) {
-    const seatIndex = selectedSeats.findIndex(seat => seat.seatNo === no && seat.seatClass === sclass);
-    const seatButton = document.querySelector(`button[onclick="selectSeat(${no},'${sclass}')"]`);
+function selectSeat(seatCode, seatClass, seatDbNo) {
+    const seatIndex = selectedSeats.findIndex(seat => seat.db_no === seatDbNo);
+    const seatButton = document.getElementById(`seat-${seatClass}-${seatCode}`);
 
-    if (!seatButton) return; // Safety check
+    if (!seatButton) return;
 
     if (seatIndex > -1) {
         selectedSeats.splice(seatIndex, 1);
         seatButton.classList.remove('is-success');
-        seatButton.classList.add('is-warning', 'is-light'); // Example: back to gold/standard light
-         if (sclass === 'standard') {
+        seatButton.classList.add('is-warning', 'is-light');
+         if (seatClass === 'standard') {
              seatButton.classList.remove('is-warning');
              seatButton.classList.add('is-info', 'is-light');
          }
     } else {
-        selectedSeats.push({ seatNo: no, seatClass: sclass });
-        seatButton.classList.remove('is-light', 'is-warning', 'is-info'); // Remove light/other colors
-        seatButton.classList.add('is-success'); // Selected color
+        selectedSeats.push({ code: seatCode, class: seatClass, db_no: seatDbNo });
+        seatButton.classList.remove('is-light', 'is-warning', 'is-info');
+        seatButton.classList.add('is-success');
     }
 
     console.log("Selected Seats:", selectedSeats);
@@ -236,7 +238,7 @@ function updatePriceAndConfirmButton() {
         contentType: 'application/json',
         data: JSON.stringify({
             'showID': showID,
-            'seats': selectedSeats
+            'seats':  selectedSeats.map(s => ({ seatCode: s.code, seatClass: s.class }))
         }),
         success: function(response) {
             $('#price-and-confirm').html(response);

@@ -26,6 +26,7 @@ DB_USER = config.get('DB_USER', 'your_default_user')
 DB_PASSWORD = config.get('DB_PASSWORD', 'your_default_password')
 
 GOLD_SEAT_THRESHOLD = 1000
+SEATS_PER_ROW = 10
 
 def format_time_tuple(time_int):
     if time_int is None:
@@ -213,6 +214,7 @@ def getSeating():
     show_id_str = request.form.get('showID')
     if not show_id_str:
         return render_bulma_notification('Missing Show ID.', 'is-warning')
+
     query_hall_info = """
         SELECT h.class, h.no_of_seats
         FROM shows s
@@ -229,10 +231,12 @@ def getSeating():
         booked_results = runQuery(query_booked, (show_id,))
     except ValueError:
         return render_bulma_notification('Invalid Show ID format.', 'is-danger')
+
     if hall_results is None or booked_results is None:
         return render_bulma_notification('Error retrieving seating information.', 'is-danger')
     if not hall_results:
         return render_bulma_notification('Hall information not found for this show.', 'is-info')
+
     total_gold = 0
     total_standard = 0
     for row in hall_results:
@@ -241,18 +245,38 @@ def getSeating():
             total_gold = num_seats if num_seats else 0
         elif seat_class and seat_class.lower() == 'standard':
             total_standard = num_seats if num_seats else 0
+
     booked_seat_nos = {row[0] for row in booked_results}
-    gold_seats = []
-    standard_seats = []
-    for i in range(1, total_gold + 1):
-        seat_db_no = i + GOLD_SEAT_THRESHOLD
-        status = 'disabled' if seat_db_no in booked_seat_nos else ''
-        gold_seats.append([i, status])
-    for i in range(1, total_standard + 1):
-        seat_db_no = i
-        status = 'disabled' if seat_db_no in booked_seat_nos else ''
-        standard_seats.append([i, status])
-    return render_template('seating.html', goldSeats=gold_seats, standardSeats=standard_seats)
+
+    def generate_seat_layout(total_seats, start_db_no, seat_class):
+        rows_data = []
+        if total_seats <= 0:
+            return rows_data
+        num_rows = (total_seats + SEATS_PER_ROW - 1) // SEATS_PER_ROW
+        seat_counter = 0
+        for r in range(num_rows):
+            row_letter = chr(ord('A') + r)
+            row_seats = []
+            for s in range(SEATS_PER_ROW):
+                seat_counter += 1
+                if seat_counter > total_seats:
+                    break
+                display_code = f"{row_letter}{s + 1}"
+                db_no = start_db_no + seat_counter -1
+                status = 'booked' if db_no in booked_seat_nos else 'available'
+                row_seats.append({
+                    "code": display_code,
+                    "db_no": db_no,
+                    "status": status,
+                    "class": seat_class
+                })
+            rows_data.append({"letter": row_letter, "seats": row_seats})
+        return rows_data
+
+    gold_layout = generate_seat_layout(total_gold, 1 + GOLD_SEAT_THRESHOLD, 'gold')
+    standard_layout = generate_seat_layout(total_standard, 1, 'standard')
+
+    return render_template('seating.html', goldLayout=gold_layout, standardLayout=standard_layout)
 
 @app.route('/getPrice', methods=['POST'])
 @login_required(role="cashier")
@@ -323,16 +347,10 @@ def createBooking():
         """
 
         for seat in selected_seats:
-            seat_display_no = seat.get('seatNo')
-            seat_class = seat.get('seatClass', '').lower()
+            seat_db_no = seat.get('db_no')
+            seat_code = seat.get('code')
+            seat_class = seat.get('class', '').lower()
 
-            if seat_class.lower() == 'gold':
-                seat_db_no = seat_display_no + GOLD_SEAT_THRESHOLD
-            elif seat_class.lower() == 'standard':
-                seat_db_no = seat_display_no
-            else:
-                return render_bulma_notification('Invalid seat class specified.', 'is-danger')
-            
             ticket_no = None
             attempts = 0
             max_attempts = 5
@@ -362,7 +380,7 @@ def createBooking():
             if isinstance(result, list) and not result:
                 booked_ticket_details.append({
                     "ticket_no": ticket_no,
-                    "seat_display": f"{seat_display_no} ({seat_class.capitalize()})"
+                    "seat_display": f"{seat_code} ({seat_class.capitalize()})"
                 })
             else:
                 logging.error(f"Booking insertion potentially failed for show {show_id}, seat {seat_db_no}. runQuery returned: {result}")
@@ -419,14 +437,16 @@ def get_total_price():
     total_price = 0
     seat_details_html = ""
 
+    print(selected_seats)
+
     for seat in selected_seats:
         seat_class = seat.get('seatClass', '').lower()
-        seat_no = seat.get('seatNo')
+        seat_code = seat.get('seatCode')
         price = base_price
         if seat_class == 'gold':
             price = int(base_price * 1.5)
         total_price += price
-        seat_details_html += f'<span class="tag is-info mr-1 mb-1">Seat {seat_no} ({seat_class.capitalize()}) - ₹{price}</span> '
+        seat_details_html += f'<span class="tag is-info mr-1 mb-1">Seat {seat_code} ({seat_class.capitalize()}) - ₹{price}</span> '
 
     return f'''
         <div class="box has-background-darker p-4">
@@ -841,6 +861,30 @@ def getBookingsByDate():
         })
 
     return render_template('groupedBookings.html', bookings=bookings_formatted, booking_date=show_date_sql)
+
+def db_no_to_seat_code(seat_db_no):
+    if seat_db_no is None:
+        return "N/A"
+
+    seat_class = 'standard'
+    relative_seat_no = seat_db_no
+
+    if seat_db_no > GOLD_SEAT_THRESHOLD:
+        seat_class = 'gold'
+        relative_seat_no = seat_db_no - GOLD_SEAT_THRESHOLD
+
+    if relative_seat_no <= 0:
+        return "Invalid"
+
+    seat_index_0 = relative_seat_no - 1
+
+    row_index = seat_index_0 // SEATS_PER_ROW
+    col_index = seat_index_0 % SEATS_PER_ROW
+
+    row_letter = chr(ord('A') + row_index)
+    col_number = col_index + 1
+
+    return f"{row_letter}{col_number}"
     
 @app.route('/ticket/<string:booking_ref>')
 @login_required(role="any")
@@ -897,6 +941,8 @@ def show_ticket(booking_ref):
                  "show_id": show_id
              }
 
+        seat_code_display = db_no_to_seat_code(seat_db_no)
+
         seat_class = 'Standard'
         seat_display_no = seat_db_no
         seat_price = base_price if base_price is not None else 0
@@ -906,14 +952,15 @@ def show_ticket(booking_ref):
              if base_price is not None:
                  seat_price = int(base_price * 1.5)
 
-        seat_display_str = f"{seat_display_no}({seat_class[0]})"
+        seat_display_str = f"{seat_code_display}({seat_class[0]})"
         ticket_info = {
             "ticket_no": ticket_no,
-            "seat_display": f"{seat_display_no} ({seat_class})",
-            "price": seat_price
+            "seat_display": f"{seat_code_display} ({seat_class})",
+            "price": seat_price,
+            "class": seat_class
         }
         ticket_data["tickets"].append(ticket_info)
-        qr_code_content_list.append(f"T{ticket_no}:S{seat_display_str}")
+        qr_code_content_list.append(f"T{ticket_no}:S-{seat_display_str}")
 
         total_booking_price += seat_price
         processed_ticket_nos.add(ticket_no)

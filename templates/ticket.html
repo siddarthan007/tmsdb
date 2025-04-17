@@ -7,125 +7,377 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bulma.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='icons/css/all.css') }}">
     <style>
-        body.dark-ticket-body { background-color: #1f1f1f !important; color: #f5f5f5 !important; font-size: 11pt; line-height: 1.6; }
-        .dark-ticket-body .ticket-card { background-color: #2a2a2a; border: 1px solid #444; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin: 30px auto; max-width: 700px; }
-        .dark-ticket-body .ticket-card .title, .dark-ticket-body .ticket-card .subtitle, .dark-ticket-body .ticket-card p, .dark-ticket-body .ticket-card strong, .dark-ticket-body .ticket-card li, .dark-ticket-body .ticket-card th, .dark-ticket-body .ticket-card td { color: #f5f5f5 !important; }
-        .dark-ticket-body .ticket-card .subtitle { color: #aaa !important; }
-        .dark-ticket-body hr { background-color: #444; height: 1px; border: none; margin: 1.5rem 0; }
-        .dark-ticket-body .table { background-color: #333; color: #f5f5f5; }
-        .dark-ticket-body .table thead th { color: #f5f5f5; border-color: #555 !important; }
-        .dark-ticket-body .table tbody tr:nth-child(odd) { background-color: #383838; }
-        .dark-ticket-body .table td { border-color: #555 !important; vertical-align: middle; }
-        .dark-ticket-body .total-price strong { color: #48c78e !important; }
-        .qr-code-container { text-align: center; margin-top: 1rem; margin-bottom: 1rem;}
-        .qr-code-container img { background-color: white; padding: 5px; max-width: 150px; height: auto; } /* Add white background for contrast */
+        body.dark-ticket-body {
+            background-color: #121212 !important;
+            color: #f5f5f5 !important;
+            font-size: 11pt;
+            line-height: 1.6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .dark-ticket-body .ticket-card {
+            background: linear-gradient(145deg, #2c2c2c, #252525);
+            border-radius: 15px;
+            border: 1px solid #383838;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            margin: 40px auto;
+            max-width: 750px;
+            overflow: hidden;
+            position: relative;
+        }
+        /* Perforated line effect */
+        .dark-ticket-body .ticket-card::before {
+            content: '';
+            position: absolute;
+            left: 40px; /* Adjust position */
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: repeating-linear-gradient(
+                to bottom,
+                #444,
+                #444 5px,
+                transparent 5px,
+                transparent 10px
+            );
+        }
+
+
+        .dark-ticket-body .card-header {
+            background: transparent; /* Header integrated */
+            padding: 1.5rem 1.5rem 0.5rem 1.5rem; /* Adjust padding */
+            border-bottom: none; /* Remove border */
+            text-align: center;
+        }
+
+        .dark-ticket-body .card-header-title {
+            color: #f8f8f8 !important;
+            font-size: 1.5rem !important;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            justify-content: center;
+            display: block;
+            padding-bottom: 0.5rem;
+        }
+        .dark-ticket-body .card-header-icon { /* Style for icon if added */
+             color: #ffcc00;
+             font-size: 1.5rem;
+        }
+
+        .dark-ticket-body .ticket-card .card-content {
+            padding: 1.5rem 1.5rem 1.5rem calc(40px + 1.5rem); /* Padding left accounts for stub line */
+        }
+
+
+        .dark-ticket-body .ticket-card .title,
+        .dark-ticket-body .ticket-card .subtitle,
+        .dark-ticket-body .ticket-card p,
+        .dark-ticket-body .ticket-card strong,
+        .dark-ticket-body .ticket-card li,
+        .dark-ticket-body .ticket-card th,
+        .dark-ticket-body .ticket-card td {
+            color: #e0e0e0 !important;
+        }
+
+        .dark-ticket-body .ticket-card .subtitle {
+            color: #b0b0b0 !important;
+            letter-spacing: 0.5px;
+        }
+
+        .dark-ticket-body hr {
+            background-color: #404040;
+            height: 1px;
+            border: none;
+            margin: 1.75rem 0;
+        }
+
+        .dark-ticket-body .table {
+            background-color: rgba(0,0,0,0.1); /* More subtle table bg */
+            color: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .dark-ticket-body .table thead th {
+            background-color: rgba(0,0,0,0.2);
+            color: #ccc;
+            border-color: #4a4a4a !important;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.7px;
+            padding: 0.8rem 0.75rem;
+        }
+
+        .dark-ticket-body .table tbody tr {
+             background-color: transparent !important; /* Remove stripes for cleaner look */
+        }
+        .dark-ticket-body .table tbody tr:hover {
+             background-color: rgba(255,255,255,0.05) !important; /* Subtle hover */
+        }
+
+
+        .dark-ticket-body .table td {
+            border-color: #4a4a4a !important;
+            vertical-align: middle;
+            padding: 0.75rem;
+        }
+
+        .booking-ref-area {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .booking-ref {
+            background-color: rgba(255, 204, 0, 0.15);
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid rgba(255, 204, 0, 0.3);
+        }
+
+        .booking-ref-text {
+            color: #ffdd57 !important; /* Bulma yellow */
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+
+        .movie-title {
+            font-size: 1.8rem !important;
+            font-weight: 700;
+            margin-bottom: 0.1rem !important;
+            color: #ffffff !important; /* Plain white might be better than gradient */
+            text-align: center;
+        }
+         .movie-subtitle {
+             text-align: center;
+             margin-bottom: 1.5rem !important;
+         }
+
+        .dark-ticket-body .total-price strong {
+            color: #4cd964 !important;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .qr-code-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .qr-code-area img {
+            background-color: white;
+            padding: 8px;
+            max-width: 140px; /* Slightly smaller */
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .qr-code-area p {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            color: #aaa !important;
+        }
+
+
+        .ticket-info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            font-size: 0.95rem;
+        }
+        .ticket-info-item .icon {
+            color: #7a7a7a; /* Icon color */
+            margin-right: 0.75rem;
+            width: 20px; /* Align icons */
+            text-align: center;
+        }
+         .ticket-info-item strong {
+            color: #ccc !important;
+         }
+
+
+        .ticket-details-section {
+            margin-bottom: 1.5rem;
+            padding: 0; /* Remove padding here, use column padding */
+        }
+
+        .button.is-success {
+            background-color: #4cd964;
+            transition: all 0.3s ease;
+        }
+
+        .button.is-success:hover {
+            background-color: #3cc954;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(76, 217, 100, 0.3);
+        }
+
+        .button.is-light {
+            background-color: #3a3a3a;
+            color: #ddd;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .button.is-light:hover {
+            background-color: #4a4a4a;
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
 
         @media print {
-            body { background-color: white !important; color: black !important; font-size: 10pt; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            html, body { width: 210mm; height: auto; }
-            .no-print { display: none !important; }
-            .ticket-card { border: none !important; box-shadow: none !important; margin: 0 !important; padding: 10mm 5mm !important; max-width: 100% !important; width: 100% !important; background-color: white !important; }
-            .ticket-card .title, .ticket-card .subtitle, .ticket-card p, .ticket-card li, .ticket-card strong, .ticket-card th, .ticket-card td { color: black !important; }
-            .ticket-card .subtitle { color: #555 !important; }
-            hr { background-color: #ccc !important; margin: 1rem 0; }
-            .table { background-color: white !important; color: black !important; }
-            .table thead th { color: black !important; border-color: #ccc !important; }
-            .table tbody tr:nth-child(odd) { background-color: #f9f9f9 !important; }
-            .table td { border-color: #ccc !important; }
-            .total-price strong { color: black !important; }
-            .qr-code-container img { background-color: white; padding: 0px; max-width: 150px; } /* No padding for print */
+             body { background-color: white !important; color: black !important; font-size: 10pt; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: Arial, sans-serif; }
+             html, body { width: 100%; height: auto; }
+             .no-print { display: none !important; }
+             .ticket-card { border: 1px solid #ccc !important; box-shadow: none !important; margin: 0 !important; padding: 8mm !important; max-width: 100% !important; width: 100% !important; background-color: white !important; background: none !important; border-radius: 0 !important;}
+             .ticket-card::before { display: none; } /* Hide stub line for print */
+             .card-header { background: none !important; border-bottom: 1px solid #ccc !important; padding: 0.5rem 0 !important; }
+             .ticket-card .card-content { padding: 0.5rem 0 !important; }
+             .ticket-card .title, .ticket-card .subtitle, .ticket-card p, .ticket-card li, .ticket-card strong, .ticket-card th, .ticket-card td { color: black !important; }
+             .ticket-card .subtitle { color: #555 !important; }
+             .movie-title { background: none !important; -webkit-text-fill-color: #000 !important; color: #000 !important; font-size: 1.4rem !important; }
+             hr { background-color: #ccc !important; margin: 0.8rem 0; }
+             .table { background-color: white !important; color: black !important; box-shadow: none; }
+             .table thead th { color: black !important; border-color: #ccc !important; background-color: #f0f0f0 !important; font-size: 0.75rem; padding: 0.5rem; }
+             .table tbody tr:nth-child(odd) { background-color: #f9f9f9 !important; }
+             .table td { border-color: #ccc !important; padding: 0.5rem; font-size: 0.9rem;}
+             .total-price strong { color: black !important; font-size: 1.1rem; }
+             .qr-code-area { background-color: transparent !important; padding: 0.5rem 0;}
+             .qr-code-area img { background-color: white; padding: 2px; max-width: 120px; box-shadow: none; }
+             .qr-code-area p { display: none; }
+             .booking-ref { background-color: transparent !important; border: 1px solid #ccc !important; padding: 5px;}
+             .booking-ref-text { color: black !important; font-size: 1.1rem;}
+             .ticket-details-section { background-color: transparent !important; border: none !important; padding: 0 !important; }
+             .ticket-info-item { font-size: 0.9rem; margin-bottom: 0.4rem; }
+             .ticket-info-item .icon { color: #444 !important; }
+             .ticket-info-item strong { color: #333 !important; }
         }
     </style>
 </head>
 <body class="dark-ticket-body">
     {% if data %}
     <div class="card ticket-card">
-        <header class="card-header" style="box-shadow: none;">
-             <p class="card-header-title is-centered is-size-4 has-text-weight-bold">
-                Booking Confirmation
-             </p>
-        </header>
-        <div class="card-content">
+         <div class="card-content">
             <div class="content">
-                 <div class="columns is-vcentered">
-                    <div class="column is-three-quarters">
-                        <p class="subtitle is-6 mb-1">Booking Reference:</p>
-                        <p><strong class="is-size-5 has-text-warning">{{ data.booking_ref }}</strong></p>
+                 <header class="card-header mb-4">
+                    <p class="card-header-title">
+                        <span class="icon card-header-icon mr-2"><i class="fas fa-ticket-alt"></i></span>
+                         Booking Confirmation
+                    </p>
+                 </header>
+
+                 <div class="booking-ref-area">
+                     <span class="subtitle is-6 has-text-grey-light">Booking Reference</span><br>
+                     <div class="booking-ref mt-1">
+                         <span class="booking-ref-text is-size-5">{{ data.booking_ref }}</span>
+                     </div>
+                 </div>
+
+                <hr>
+
+                <h2 class="movie-title">{{ data.show_info.movie_name }}</h2>
+                <p class="subtitle is-6 movie-subtitle">{{ data.show_info.show_type }}</p>
+
+                <div class="columns is-variable is-4">
+                    <div class="column is-two-thirds ticket-details-section">
+                         <div class="ticket-info-item">
+                             <span class="icon"><i class="fas fa-calendar-alt fa-fw"></i></span>
+                             <strong>{{ data.show_info.date }}</strong>
+                         </div>
+                          <div class="ticket-info-item">
+                             <span class="icon"><i class="fas fa-clock fa-fw"></i></span>
+                              <strong>{{ data.show_info.time }}</strong>
+                         </div>
+                          <div class="ticket-info-item">
+                             <span class="icon"><i class="fas fa-door-open fa-fw"></i></span>
+                             <strong>Hall {{ data.show_info.hall_id }}</strong>
+                         </div>
+                         {% if data.show_info.customer_name %}
+                         <div class="ticket-info-item mt-4">
+                            <span class="icon"><i class="fas fa-user fa-fw"></i></span>
+                            <span>{{ data.show_info.customer_name }}</span>
+                         </div>
+                         {% endif %}
+                         {% if data.show_info.customer_phone %}
+                         <div class="ticket-info-item">
+                            <span class="icon"><i class="fas fa-phone fa-fw"></i></span>
+                            <span>{{ data.show_info.customer_phone }}</span>
+                         </div>
+                         {% endif %}
                     </div>
-                    <div class="column qr-code-container">
+                     <div class="column is-one-third qr-code-area">
                          {% if data.qr_code_data %}
                              <img src="{{ data.qr_code_data }}" alt="Booking QR Code">
+                             <p>Scan at Entry</p>
                          {% else %}
                              <p class="is-size-7 has-text-danger">QR Code Error</p>
                          {% endif %}
                     </div>
-                 </div>
-
-                 <hr>
-
-                 <h2 class="title is-4 mb-1">{{ data.show_info.movie_name }}</h2>
-                 <p class="subtitle is-6 has-text-grey-light mb-4">({{ data.show_info.show_type }})</p>
-
-                <div class="columns is-mobile is-variable is-1">
-                    <div class="column">
-                        <p><strong class="has-text-grey-light">Date:</strong> {{ data.show_info.date }}</p>
-                        <p><strong class="has-text-grey-light">Time:</strong> {{ data.show_info.time }}</p>
-                        <p><strong class="has-text-grey-light">Hall:</strong> {{ data.show_info.hall_id }}</p>
-                    </div>
-                    <div class="column">
-                        {% if data.show_info.customer_name %}
-                        <p><strong class="has-text-grey-light">Name:</strong> {{ data.show_info.customer_name }}</p>
-                        {% endif %}
-                        {% if data.show_info.customer_phone %}
-                        <p><strong class="has-text-grey-light">Phone:</strong> {{ data.show_info.customer_phone }}</p>
-                        {% endif %}
-                    </div>
                 </div>
+
                 <hr>
+
                 <h3 class="title is-5 mb-3">Your Seat(s):</h3>
                 <div class="table-container">
-                    <table class="table is-bordered is-striped is-narrow is-fullwidth is-hoverable">
-                         <thead>
+                    <table class="table is-bordered is-narrow is-fullwidth">
+                        <thead>
                             <tr>
                                 <th>Seat</th>
                                 <th>Ticket #</th>
-                                 <th>Price</th>
+                                <th>Price</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for ticket in data.tickets %}
                             <tr>
-                                <td>{{ ticket.seat_display }}</td>
+                                <td>
+                                    <span class="icon is-small mr-1">
+                                        {% if ticket.class == 'Gold' %}
+                                            <i class="fas fa-star has-text-warning"></i>
+                                        {% else %}
+                                            <i class="fas fa-couch has-text-info"></i>
+                                        {% endif %}
+                                    </span>
+                                    {{ ticket.seat_display }}
+                                </td>
                                 <td>{{ ticket.ticket_no }}</td>
                                 <td>₹{{ ticket.price }}</td>
                             </tr>
                             {% endfor %}
                          </tbody>
                     </table>
-                 </div>
+                </div>
                 <p class="title is-4 has-text-right mt-4 total-price">Total Price: <strong>₹{{ data.total_price }}</strong></p>
                 <hr>
-                 <p class="has-text-centered is-size-7 has-text-grey-light">Thank you for booking!</p>
+                <p class="has-text-centered is-size-7 has-text-grey-light">Thank you for booking!</p>
             </div>
         </div>
     </div>
 
     <div class="has-text-centered mt-5 mb-5 no-print">
         <button class="button is-success is-medium mr-2" onclick="window.print();">
-             <span class="icon"><i class="fas fa-print"></i></span>
-             <span>Print Ticket</span>
+            <span class="icon"><i class="fas fa-print"></i></span>
+            <span>Print Ticket</span>
         </button>
         <button class="button is-light is-medium" onclick="window.close();">
-             <span class="icon"><i class="fas fa-times"></i></span>
-             <span>Close</span>
+            <span class="icon"><i class="fas fa-times"></i></span>
+            <span>Close</span>
         </button>
     </div>
     {% else %}
-     <div class="container has-text-centered mt-6">
-         <div class="notification is-danger is-light">
-             <p class="is-size-5">{{ error if error else 'Could not load ticket data.' }}</p>
-         </div>
-     </div>
+    <div class="container has-text-centered mt-6">
+        <div class="notification is-danger is-light">
+            <p class="is-size-5">{{ error if error else 'Could not load ticket data.' }}</p>
+        </div>
+    </div>
     {% endif %}
 </body>
 </html>
