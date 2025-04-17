@@ -1,0 +1,299 @@
+/* ==========================================================================
+   Font Declarations (Kept as is)
+   ========================================================================== */
+
+   @font-face {
+    font-family: 'productreg';
+    src: url('productReg.ttf');
+}
+
+@font-face {
+    font-family: 'productbold';
+    src: url('productBold.ttf');
+}
+
+/* ==========================================================================
+   Global Styles (Bulma Theme Alignment)
+   ========================================================================== */
+
+body {
+    /* Using custom font, Bulma default dark background and text color */
+    font-family: 'productreg', BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #f5f5f5; /* Bulma $text-light */
+    font-size: 1rem; /* Bulma default */
+    line-height: 1.5; /* Bulma default */
+}
+
+/* Attempt to style base headings similar to Bulma titles */
+/* Note: Specific overrides later will take precedence */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'productbold', BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #f5f5f5; /* $text-light */
+    font-weight: 600; /* Bulma $weight-semibold */
+    line-height: 1.125; /* Bulma title line-height */
+    margin-bottom: 1rem; /* Approximate Bulma title margin */
+}
+
+h1 { font-size: 3rem; } /* is-size-1 */
+h2 { font-size: 2.5rem; } /* is-size-2 */
+h3 { font-size: 2rem; } /* is-size-3 */
+h4 { font-size: 1.5rem; margin-bottom: 0.75rem; } /* is-size-4 */
+h5 { font-size: 1.25rem; margin-bottom: 0.5rem; } /* is-size-5 */
+h6 { font-size: 1rem; margin-bottom: 0.5rem; } /* is-size-6 */
+
+
+/* ==========================================================================
+   Button Styles (Mimic Bulma Button)
+   ========================================================================== */
+
+/* Base style for ALL buttons - Make them look like .button */
+/* It's better to add class="button" in HTML */
+button {
+    font-family: 'productreg', sans-serif; /* Base font */
+    color: #f5f5f5; /* Text light */
+    font-size: 1rem;
+    border-radius: 4px; /* Bulma $radius */
+    border: 1px solid #6a6a6a; /* Subtle border for dark theme */
+    background-color: #4a4a4a; /* Grey dark background */
+    outline: none;
+    padding: 0.5em 1em; /* Bulma button padding */
+    margin: 0.5rem 0.25rem; /* Adjust margin */
+    min-width: auto; /* Remove fixed min-width */
+    min-height: auto; /* Remove fixed min-height */
+    cursor: pointer;
+    display: inline-block; /* Correct display */
+    vertical-align: top; /* Align properly */
+    text-align: center;
+    white-space: nowrap; /* Prevent wrapping */
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Style for buttons identified as primary/accent (like the old .btn) */
+/* Use class="button is-warning" or similar in HTML instead */
+.module button.btn { /* Keep selector for compatibility if HTML not changed */
+    font-family: 'productbold', sans-serif; /* Bolder font */
+    background-color: #ffdd57; /* Bulma $yellow */
+    border-color: transparent; /* Remove border for colored buttons */
+    color: rgba(0, 0, 0, 0.7); /* Bulma yellow text color */
+    min-width: auto; /* Remove fixed min-width */
+}
+
+/* Hover/Focus States */
+
+button:hover {
+    background-color: #5a5a5a; /* Slightly lighter grey */
+    border-color: #7a7a7a;
+    color: #f5f5f5; /* Ensure text color stays */
+}
+
+.module button.btn:hover { /* Hover for accent button */
+    background-color: #ffda4f; /* Slightly lighter yellow */
+    border-color: transparent;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+button:focus {
+    outline: 0;
+    border-color: #f5f5f5; /* Highlight border */
+    box-shadow: 0 0 0 0.125em rgba(245, 245, 245, 0.25); /* Bulma focus glow */
+}
+.module button.btn:focus {
+    border-color: transparent;
+    box-shadow: 0 0 0 0.125em rgba(255, 221, 87, 0.25); /* Yellow glow */
+}
+
+/* Disabled States */
+input:disabled {
+    background-color: #2a2a2a; /* Darker background */
+    border-color: #4a4a4a; /* Darker border */
+    color: #7a7a7a; /* Muted text */
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+button:disabled {
+    background-color: #363636; /* Darker background */
+    border-color: #4a4a4a; /* Darker border */
+    color: #7a7a7a; /* Muted text */
+    cursor: not-allowed;
+    opacity: 0.7; /* Reduce opacity */
+    box-shadow: none;
+}
+/* Ensure hover/focus does not apply to disabled */
+button:disabled:hover,
+button:disabled:focus {
+    background-color: #363636;
+    border-color: #4a4a4a;
+    box-shadow: none;
+}
+
+
+/* ==========================================================================
+   Specific UI Elements (Bulma Theme Alignment)
+   ========================================================================== */
+
+/* Style .ticket like a Bulma tag or small box */
+.ticket {
+    display: inline-block;
+    border: 1px solid #ffdd57; /* Keep accent border */
+    background-color: #363636; /* Dark background */
+    color: #f5f5f5; /* Light text */
+    border-radius: 4px; /* Bulma $radius */
+    margin: 0.5rem; /* Consistent margin */
+    padding: 0.5em 0.75em; /* Tag-like padding */
+}
+
+
+/* ==========================================================================
+   Third-Party Component Styles (Picker - Kept Bulma-themed version)
+   ========================================================================== */
+
+.picker {
+    color: #f5f5f5;
+}
+
+.picker__box {
+    background: #363636;
+    border-radius: 6px;
+    border: 1px solid #4a4a4a;
+    box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02);
+}
+
+.picker__header {
+    padding: 0.75rem 1rem;
+}
+
+.picker__table {
+    padding: 0 0.5rem 0.5rem;
+}
+
+.picker__weekday {
+    color: #9a9a9a;
+    font-size: 0.875em;
+    font-weight: 500;
+    padding-bottom: 0.5em;
+}
+
+.picker__day {
+    color: #f5f5f5;
+    border-radius: 4px;
+    padding: 0.3em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.picker__day:hover {
+    background-color: #4a4a4a;
+    cursor: pointer;
+    color: #f5f5f5;
+}
+
+.picker__day--selected,
+.picker__day--selected:hover,
+.picker--focused .picker__day--selected {
+    background-color: #485fc7; /* Bulma $primary */
+    color: #ffffff; /* Bulma $primary-invert */
+    border-radius: 4px;
+}
+
+.picker__day--today {
+     position: relative;
+}
+.picker__day--today::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background-color: #f5f5f5;
+    border-radius: 50%;
+}
+.picker__day--today.picker__day--selected::after {
+    background-color: #ffffff;
+}
+
+.picker__day--outfocus {
+    color: #7a7a7a;
+}
+.picker__day--outfocus:hover {
+     background-color: transparent;
+     cursor: default;
+}
+
+.picker__day--disabled,
+.picker__day--disabled:hover,
+.picker--focused .picker__day--disabled {
+    background-color: #424242;
+    border-color: #424242;
+    color: #7a7a7a;
+    cursor: not-allowed;
+    opacity: 0.7;
+    border-radius: 4px;
+}
+
+.picker__footer {
+    padding: 0.75rem 1rem;
+    text-align: right;
+}
+
+.picker__button--today,
+.picker__button--clear,
+.picker__button--close {
+    background-color: #4a4a4a;
+    border: 1px solid transparent;
+    color: #f5f5f5;
+    border-radius: 4px;
+    padding: 0.5em 1em;
+    font-size: 0.875em;
+    cursor: pointer;
+    margin-left: 0.5em;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.picker__button--today:hover,
+.picker__button--clear:hover,
+.picker__button--close:hover {
+    background-color: #525252;
+    border-color: transparent;
+    color: #f5f5f5;
+}
+
+.picker--time .picker__box {
+     background: #363636;
+     border-radius: 6px;
+     border: 1px solid #4a4a4a;
+     padding: 0.5rem 0;
+}
+
+.picker__list {
+    margin-top: 0;
+}
+
+.picker__list-item {
+    background: transparent;
+    border-top: none;
+    padding: 0.6em 1.5em;
+    color: #f5f5f5;
+    transition: background-color 0.2s ease;
+    text-align: center;
+}
+
+.picker__list-item:hover {
+    background-color: #4a4a4a;
+    cursor: pointer;
+}
+
+.picker__list-item--selected,
+.picker__list-item--selected:hover {
+    background-color: #485fc7; /* Bulma $primary */
+    color: #ffffff; /* Bulma $primary-invert */
+}
+
+.picker__list-item--disabled,
+.picker__list-item--disabled:hover {
+    background-color: transparent;
+    color: #7a7a7a;
+    cursor: not-allowed;
+    opacity: 0.7;
+}

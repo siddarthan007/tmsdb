@@ -1,0 +1,47 @@
+<h4 class="title is-4 has-text-centered mb-4">Select Price Listing</h4>
+
+<div class="columns is-multiline is-centered">
+
+    {% for price in prices %}
+    <div class="column is-narrow"> <div class="box price-listing-box" onclick="alterPrice({{ price[0] }})">
+            <div class="content">
+                <p class="title is-6 has-text-weight-semibold mb-1">
+                    {{ price[1] }} / {{ price[2] }}
+                </p>
+                <p class="is-size-7 mb-1">
+                    Standard: ₹ {{ price[3] }}
+                </p>
+                <p class="is-size-7">
+                    Gold: ₹ {{ price[3] * 1.5 }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<style>
+    .price-listing-box {
+        cursor: pointer;
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        min-width: 150px;
+        text-align: center;
+    }
+
+    .price-listing-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .price-listing-box .content,
+    .price-listing-box .title {
+        color: inherit; /* Inherit color from box/body */
+    }
+
+    body.has-background-dark .price-listing-box .content,
+    body.has-background-dark .price-listing-box .title {
+         color: #f5f5f5;
+    }
+
+</style>

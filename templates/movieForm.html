@@ -1,0 +1,73 @@
+<div class="box">
+    <h4 class="title is-4 has-text-centered mb-5">Movie Details</h4>
+    <div id="movieform">
+
+        <div class="field mb-3">
+            <label class="label" for="movieNameInput">Name</label>
+            <div class="control has-icons-left">
+                <input class="input" type="text" name="movieName" id="movieNameInput" placeholder="e.g., The Galactic Quest">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-film"></i>
+                </span>
+            </div>
+        </div>
+
+        <div class="field mb-3">
+            <label class="label" for="movieLenInput">Length (minutes)</label>
+            <div class="control has-icons-left">
+                <input class="input" type="number" name="movieLen" id="movieLenInput" placeholder="e.g., 125" min="1">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-clock"></i>
+                </span>
+            </div>
+        </div>
+
+        <div class="field mb-3">
+            <label class="label" for="movieLangInput">Language</label>
+            <div class="control has-icons-left">
+                <input class="input" type="text" name="movieLang" id="movieLangInput" placeholder="e.g., English">
+                 <span class="icon is-small is-left">
+                    <i class="fas fa-language"></i>
+                 </span>
+            </div>
+        </div>
+
+        <div class="field mb-3">
+            <label class="label" for="movieTypesInput">Types Available</label>
+            <div class="control has-icons-left">
+                <input class="input" type="text" name="movieTypes" id="movieTypesInput" placeholder="e.g., 2D 3D" maxlength="10">
+                 <span class="icon is-small is-left">
+                    <i class="fas fa-theater-masks"></i>
+                 </span>
+            </div>
+            <p class="help">Enter types separated by space (e.g., 2D 3D 4DX)</p>
+        </div>
+
+        <div class="field mb-3">
+            <label class="label" for="datepicker-manager-2">Premiere Date</label>
+            <div class="control has-icons-left">
+                <input class="input" id="datepicker-manager-2" placeholder="Select premiere date" type="text">
+                 <span class="icon is-small is-left">
+                    <i class="fas fa-calendar-check"></i>
+                 </span>
+            </div>
+        </div>
+
+        <div class="field mb-3">
+            <label class="label" for="datepicker-manager-3">Last Showing Date</label>
+            <div class="control has-icons-left">
+                 <input class="input" id="datepicker-manager-3" placeholder="Select last date" type="text">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-calendar-times"></i>
+                 </span>
+            </div>
+        </div>
+
+        <div class="field mt-5">
+            <div class="control">
+                <button class="button is-success" onclick="filledMovieForm()">Submit Movie Details</button>
+            </div>
+        </div>
+
+    </div>
+</div>

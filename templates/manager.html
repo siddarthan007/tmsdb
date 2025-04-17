@@ -1,0 +1,36 @@
+<nav class="level">
+	<div class="level-left">
+	  <div class="level-item">
+		<button onclick="login()" class="button is-warning">Reset</button>
+	  </div>
+	</div>
+  
+	<div class="level-item has-text-centered">
+	  <h2 class="title is-size-3 has-text-weight-semibold py-1 px-3" 
+		  style="border: 3px solid #FFFFFF; border-radius: 20px; display: inline-block; line-height: 1.2;">
+		Manager
+	  </h2>
+	</div>
+  
+	<div class="level-right">
+	  <div class="level-item">
+		 <button onclick="logoutUser()" class="button is-danger">Logout</button>
+	  </div>
+	</div>
+  </nav>
+  
+  <div id="options" class="buttons is-centered mt-5">
+	  <button onclick="viewBookedTickets()" class="button is-info">View Bookings</button>
+	  <button onclick="insertMovie()" class="button is-success">Insert a Movie</button>
+	  <button onclick="createShow()" class="button is-primary">Schedule a Show</button>
+	  <button onclick="alterPricing()" class="button is-link">Alter Prices</button>
+  </div>
+  
+  <div id="manager-content-area" class="mt-5">
+	<div id="manager-dynamic-1" class="mb-4"></div>
+	<div id="manager-dynamic-2" class="mb-4"></div>
+	<div id="manager-dynamic-3" class="mb-4"></div>
+	<div id="manager-dynamic-4" class="mb-4"></div>
+	<div id="manager-dynamic-5" class="mb-4"></div>
+  </div>
+</nav>

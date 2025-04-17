@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>TMS-DB</title>
+
+    <link rel="icon" href="{{ url_for('static', filename='favicon-film.ico') }}">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bulma.min.css') }}">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='icons/css/all.css') }}">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/themes/default.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/themes/default.date.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/themes/default.time.css') }}">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <section class="section mt-4">
+        <div class="container login-header">
+            <div class="has-text-centered mb-5">
+                 <span class="icon is-large has-text-primary"> <i class="fas fa-film fa-3x"></i> </span>
+                <h1 class="title is-1">TMS-DB</h1>
+                <h2 class="subtitle is-4">A theatre management and ticketing system.</h2>
+            </div>
+
+            <div class="box column is-half is-offset-one-quarter module">
+                <div class="field mt-4">
+                    <label class="label mb-2" for="username">Username</label>
+                    <div class="control has-icons-left">
+                        <input id="username" class="input" type="text" name="username" placeholder="Username" autocomplete="off">
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-user"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field mt-4">
+                     <label class="label mb-2" for="password">Password</label>
+                    <div class="control has-icons-left">
+                        <input id="password" class="input" type="password" name="password" placeholder="Password">
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field mt-4">
+                    <div class="control">
+                        <button type="button" class="button is-warning is-fullwidth" onclick="login()">Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/picker.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/picker.date.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/picker.time.js') }}"></script>
+
+    <script type="text/javascript" src="{{ url_for('static',filename='app.js') }}"></script>
+</body>
+</html>

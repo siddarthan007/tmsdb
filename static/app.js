@@ -1,0 +1,718 @@
+var username = null;
+var password = null;
+var date = null;
+var movieID = null;
+var type = null;
+var seatNo = null;
+var seatClass = null;
+var movieTime = null;
+var showID = null;
+var startShowing = null;
+var endShowing = null;
+var showTime = null;
+var showDate = null;
+var priceID = null;
+
+function createNotification(message, type = 'is-danger') {
+    return `<div class="notification ${type} is-light p-2 mb-3"> ${message} </div>`;
+}
+
+function logoutUser() {
+    window.location.href = '/logout';
+}
+
+function login() {
+    if (username === null) {
+        username = $("input[name='username']").val();
+        password = $("input[name='password']").val();
+    }
+
+    if (!username || !password) {
+        $('.module .notification').remove();
+        $('.module').prepend(createNotification('Please enter username and password.'));
+        username = null;
+        password = null;
+        return;
+    }
+
+    var formData = {
+        'username': username,
+        'password': password
+    };
+
+    $.ajax({
+        type: 'POST',
+        url: '/login',
+        data: formData,
+        success: function(response) {
+            $('.module').html(response);
+            if (response.includes('id="datepicker-cashier"') || response.includes('id="options"')) {
+                $('.module').addClass('box p-5');
+                $('.login-header').addClass('title is-4 has-text-centered mb-5');
+                if ($('#datepicker-cashier').length) {
+                     if (!$('#datepicker-cashier').hasClass('input')) {
+                         $('#datepicker-cashier').addClass('input');
+                    }
+                    $('#datepicker-cashier').pickadate({
+                        min: new Date(),
+                        formatSubmit: 'yyyy/mm/dd',
+                        hiddenName: true,
+                        klass: { input: 'input' },
+                        onSet: function(event) {
+                            if (event.select) {
+                                $('#datepicker-cashier').prop('disabled', true);
+                                getMoviesShowingOnDate(this.get('select', 'yyyy/mm/dd'));
+                            }
+                        }
+                    });
+                    if (!$('#datepicker-cashier').parent().hasClass('control')) {
+                        $('#datepicker-cashier').wrap('<div class="control"></div>').parent().wrap('<div class="field"><label class="label">Select Date</label></div>');
+                    }
+                }
+                 if ($('#options').length) {
+                     $('#options').addClass('mt-5 pt-5 border-top');
+                     $('#options h3').addClass('title is-5 mb-4');
+                     $('#options .buttons').addClass('is-centered');
+                 }
+            } else {
+                 username = null;
+                 password = null;
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("Login AJAX error:", textStatus, errorThrown);
+            $('.module .notification').remove();
+            $('.module').prepend(createNotification('Login failed due to a network or server error. Please try again later.'));
+            username = null;
+            password = null;
+        }
+    });
+}
+
+function getMoviesShowingOnDate(mdate) {
+    date = mdate;
+    console.log("Fetching movies for date:", date);
+    $('#movies-on-date').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getMoviesShowingOnDate',
+        data: { 'date': date },
+        success: function(response) {
+            $('#movies-on-date').html(response);
+            $('#movies-on-date button').addClass('button is-link m-1');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("getMoviesShowingOnDate AJAX error:", textStatus, errorThrown);
+            $('#movies-on-date').html(createNotification('Could not load movies. Please try again.', 'is-warning'));
+        }
+    });
+}
+
+function selectMovie(movID, mtype) {
+    movieID = movID;
+    type = mtype;
+    console.log("Selected Movie:", movieID, "Type:", type, "Date:", date);
+    $('#timings-for-movie').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getTimings',
+        data: {
+            'date': date,
+            'movieID': movieID,
+            'type': type
+        },
+        success: function(response) {
+            $('#movies-on-date button').prop('disabled', true);
+            $('#timings-for-movie').html(response);
+            $('#timings-for-movie button').addClass('button is-primary m-1');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("selectMovie AJAX error:", textStatus, errorThrown);
+            $('#timings-for-movie').html(createNotification('Could not load timings. Please try again.', 'is-warning'));
+        }
+    });
+}
+
+function selectTiming(mtime) {
+    movieTime = mtime;
+    console.log("Selected Timing:", movieTime, "for Show:", movieID, type, date);
+    $('#available-seats').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getShowID',
+        dataType: 'json',
+        data: {
+            'date': date,
+            'movieID': movieID,
+            'type': type,
+            'time': movieTime
+        },
+        success: function(response) {
+            if (response && response.showID) {
+                $('#timings-for-movie button').prop('disabled', true);
+                showID = response.showID;
+                console.log("Got showID:", showID);
+                getSeats();
+            } else {
+                console.error("Could not retrieve showID from response:", response);
+                $('#available-seats').html(createNotification('Error finding show details. Please reselect.', 'is-danger'));
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("selectTiming AJAX error:", textStatus, errorThrown);
+            $('#available-seats').html(createNotification('Could not fetch show details. Please try again.', 'is-warning'));
+        }
+    });
+}
+
+function getSeats() {
+    console.log("Getting seats for showID:", showID);
+    if (!showID) {
+        $('#available-seats').html(createNotification('Invalid Show selected. Please start over.', 'is-danger'));
+        return;
+    }
+    $('#available-seats').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getAvailableSeats',
+        data: { 'showID': showID },
+        success: function(response) {
+            $('#available-seats').html(response);
+            $('#available-seats .seat-button').addClass('button m-1 is-small');
+            $('#available-seats .seat-available').addClass('is-outlined is-primary');
+            $('#available-seats .seat-booked').addClass('is-danger').prop('disabled', true);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("getSeats AJAX error:", textStatus, errorThrown);
+            $('#available-seats').html(createNotification('Could not load seating plan. Please try again.', 'is-warning'));
+        }
+    });
+}
+
+function selectSeat(no, sclass) {
+    seatNo = no;
+    seatClass = sclass;
+    console.log("Selected Seat:", seatNo, "Class:", seatClass, "for showID:", showID);
+    $('#available-seats .button.is-selected').removeClass('is-selected is-info').addClass('is-outlined is-primary');
+    $(`#seat-${sclass}-${no}`).removeClass('is-outlined is-primary').addClass('is-selected is-info');
+    $('#price-and-confirm').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getPrice',
+        data: {
+            'showID': showID,
+            'seatClass': seatClass
+        },
+        success: function(response) {
+            $('#price-and-confirm').html(response);
+            $('#price-display').addClass('tag is-large is-success mb-3');
+            $('#confirm-button').addClass('button is-success');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("selectSeat AJAX error:", textStatus, errorThrown);
+            $('#price-and-confirm').html(createNotification('Could not retrieve price. Please try again.', 'is-warning'));
+        }
+    });
+}
+
+function confirmBooking() {
+    console.log("Confirming booking for Seat:", seatNo, seatClass, "Show:", showID);
+    if (!showID || !seatNo || !seatClass) {
+        $('#price-and-confirm .notification').remove();
+        $('#price-and-confirm').append(createNotification('Booking details incomplete. Please reselect seat.', 'is-warning'));
+        return;
+    }
+    $('#price-and-confirm button').prop('disabled', true).addClass('is-loading');
+
+    $.ajax({
+        type: 'POST',
+        url: '/insertBooking',
+        data: {
+            'showID': showID,
+            'seatNo': seatNo,
+            'seatClass': seatClass
+        },
+        success: function(response) {
+            $('#available-seats .button').prop('disabled', true);
+            $('#price-and-confirm').html(response);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("confirmBooking AJAX error:", textStatus, errorThrown);
+            $('#price-and-confirm .notification').remove();
+            $('#price-and-confirm').html(createNotification('Booking failed due to a network or server error. Please try again.', 'is-danger'));
+            $('#price-and-confirm button').prop('disabled', false).removeClass('is-loading');
+        }
+    });
+}
+
+function viewBookedTickets() {
+    console.log("Manager action: View Booked Tickets");
+    $('#options button').prop('disabled', true);
+    $('#options button.is-info').removeClass('is-info').addClass('is-light');
+    $('#manager-dynamic-1').html(`
+        <div class="box">
+            <h4 class="title is-5 mb-4">View Booked Tickets</h4>
+            <div class="field">
+                <label class="label" for="datepicker-manager-1">Select Date to View Bookings</label>
+                <div class="control">
+                    <input class="input" id="datepicker-manager-1" placeholder="Pick a date">
+                </div>
+            </div>
+        </div>`);
+    $('#datepicker-manager-1').pickadate({
+        formatSubmit: 'yyyy/mm/dd',
+        hiddenName: true,
+        klass: { input: 'input' },
+        onSet: function(event) {
+            if (event.select) {
+                $('#datepicker-manager-1').prop('disabled', true);
+                getShowsShowingOnDate(this.get('select', 'yyyy/mm/dd'));
+            }
+        }
+    });
+    $('#manager-dynamic-2, #manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+    $('#manager-dynamic-1').closest('.section').removeClass('is-hidden');
+}
+
+function getShowsShowingOnDate(mdate) {
+    date = mdate;
+    console.log("Manager: Fetching shows for date:", date);
+    $('#manager-dynamic-2').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getShowsShowingOnDate',
+        data: { 'date': date },
+        success: function(response) {
+            $('#manager-dynamic-2').html(response);
+            $('#manager-dynamic-2 button').addClass('button is-link m-1');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("getShowsShowingOnDate AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-2').html(createNotification('Could not load shows for this date.', 'is-warning'));
+        }
+    });
+    $('#manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+}
+
+function selectShow(mshowID) {
+    showID = mshowID;
+    console.log("Manager: Selecting show:", showID, "to view bookings.");
+    $('#manager-dynamic-3').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getBookedWithShowID',
+        data: { 'showID': showID },
+        success: function(response) {
+            $('#manager-dynamic-2 button').prop('disabled', true);
+            $('#manager-dynamic-3').html(response);
+            $('#manager-dynamic-3 table').addClass('table is-bordered is-striped is-narrow is-hoverable is-fullwidth');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("selectShow AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-3').html(createNotification('Could not load bookings for this show.', 'is-warning'));
+        }
+    });
+    $('#manager-dynamic-4, #manager-dynamic-5').html('');
+}
+
+function insertMovie() {
+    console.log("Manager action: Insert New Movie");
+    $('#options button').prop('disabled', true);
+    $('#options button.is-info').removeClass('is-info').addClass('is-light');
+    $('#manager-dynamic-1').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'GET',
+        url: '/fetchMovieInsertForm',
+        success: function(response) {
+            $('#manager-dynamic-1').html('<div class="box">' + response + '</div>');
+            $('#manager-dynamic-1 form .field').addClass('mb-3');
+            $('#manager-dynamic-1 form .label').addClass('label');
+            $('#manager-dynamic-1 form .input').addClass('input');
+            $('#manager-dynamic-1 form .button').addClass('button is-primary');
+            $('#manager-dynamic-1 form .control').addClass('control');
+            var pickerOptions = {
+                formatSubmit: 'yyyy/mm/dd',
+                hiddenName: true,
+                klass: { input: 'input' }
+            };
+            $('#datepicker-manager-2').pickadate({
+                ...pickerOptions,
+                onSet: function(event) {
+                    if (event.select) {
+                        startShowing = this.get('select', 'yyyy/mm/dd');
+                        console.log("Start date set:", startShowing);
+                        $(this.$node).removeClass('is-danger').addClass('is-success');
+                    }
+                }
+            });
+            $('#datepicker-manager-3').pickadate({
+                ...pickerOptions,
+                onSet: function(event) {
+                    if (event.select) {
+                        endShowing = this.get('select', 'yyyy/mm/dd');
+                        console.log("End date set:", endShowing);
+                        $(this.$node).removeClass('is-danger').addClass('is-success');
+                    }
+                }
+            });
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("insertMovie (fetch form) AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-1').html(createNotification('Could not load the movie form. Please try again.', 'is-warning'));
+        }
+    });
+    $('#manager-dynamic-2, #manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+    $('#manager-dynamic-1').closest('.section').removeClass('is-hidden');
+}
+
+function filledMovieForm() {
+    console.log("Manager: Submitting new movie form");
+    $('#manager-dynamic-2').html('');
+    var movieName = $('input[name="movieName"]').val();
+    var movieLenStr = $('input[name="movieLen"]').val();
+    var movieLang = $('input[name="movieLang"]').val();
+    var movieTypesStr = $('input[name="movieTypes"]').val().toUpperCase().trim();
+    var startDateSubmit = $('input[name="datepicker-manager-2_submit"]').val();
+    var endDateSubmit = $('input[name="datepicker-manager-3_submit"]').val();
+    startShowing = startDateSubmit;
+    endShowing = endDateSubmit;
+    var errors = [];
+    var $form = $('#manager-dynamic-1 form');
+    $form.find('.input, .textarea').removeClass('is-danger');
+    $form.find('.help.is-danger').remove();
+
+    function addError(fieldSelector, message) {
+        errors.push(message);
+        let $field = $form.find(fieldSelector);
+        $field.addClass('is-danger');
+        let $control = $field.closest('.control');
+        if ($control.length) {
+            $control.append(`<p class="help is-danger">${message}</p>`);
+        }
+    }
+
+    if (!movieName) addError('input[name="movieName"]', "Movie Name is required.");
+    if (!movieLang) addError('input[name="movieLang"]', "Movie Language is required.");
+    if (!movieTypesStr) addError('input[name="movieTypes"]', "Movie Types are required.");
+    if (!startShowing) addError('#datepicker-manager-2', "Premiere Date is required.");
+    if (!endShowing) addError('#datepicker-manager-3', "Last Showing Date is required.");
+    if (!movieLenStr) {
+        addError('input[name="movieLen"]', "Movie Length is required.");
+    } else if (!$.isNumeric(movieLenStr)) {
+        addError('input[name="movieLen"]', "Movie Length must be a number (in minutes).");
+    } else if (parseInt(movieLenStr, 10) <= 0) {
+        addError('input[name="movieLen"]', "Movie Length must be a positive number.");
+    }
+    if (startShowing && endShowing && Date.parse(startShowing) > Date.parse(endShowing)) {
+        addError('#datepicker-manager-3', "Last Date must be on or after Premiere Date.");
+    }
+    var types = movieTypesStr.split(' ');
+    var allowedTypes = ['2D', '3D', '4DX'];
+    var validTypes = types.every(function(t) { return allowedTypes.includes(t); });
+    if (!validTypes && movieTypesStr) {
+        addError('input[name="movieTypes"]', "Invalid Format (use space-separated: 2D, 3D, 4DX).");
+    }
+
+    if (errors.length > 0) {
+        let errorHtml = `<div class="notification is-danger is-light mb-3">
+                            <strong>Please Correct The Highlighted Fields.</strong>
+                         </div>`;
+        $('#manager-dynamic-2').html(errorHtml);
+    } else {
+        var movieLen = parseInt(movieLenStr, 10);
+        console.log("Submitting Movie:", movieName, movieLen, movieLang, movieTypesStr, startShowing, endShowing);
+        $form.find('button').addClass('is-loading');
+
+        $.ajax({
+            type: 'POST',
+            url: '/insertMovie',
+            data: {
+                'movieName': movieName,
+                'movieLen': movieLen,
+                'movieLang': movieLang,
+                'types': movieTypesStr,
+                'startShowing': startShowing,
+                'endShowing': endShowing
+            },
+            success: function(response) {
+                $('#manager-dynamic-1 input, #manager-dynamic-1 select, #manager-dynamic-1 button').prop('disabled', true);
+                $form.find('button').removeClass('is-loading');
+                $('#manager-dynamic-2').html(response);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error("filledMovieForm AJAX error:", textStatus, errorThrown);
+                $('#manager-dynamic-2').html(createNotification('Failed to submit movie details. Please try again.', 'is-danger'));
+                $form.find('button').removeClass('is-loading');
+            }
+        });
+    }
+    $('#manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+}
+
+function createShow() {
+    console.log("Manager action: Create Show");
+    $('#options button').prop('disabled', true);
+    $('#options button.is-info').removeClass('is-info').addClass('is-light');
+    $('#manager-dynamic-1').html(`
+        <div class="box">
+            <h4 class="title is-5 mb-4">Create New Show</h4>
+            <div class="field">
+                <label class="label" for="datepicker-manager-create-show">Select Show Date</label>
+                <div class="control">
+                    <input class="input" id="datepicker-manager-create-show" placeholder="Pick a date">
+                </div>
+            </div>
+            <div class="field">
+                <label class="label" for="timepicker-manager-create-show">Select Show Time</label>
+                <div class="control">
+                    <input class="input" id="timepicker-manager-create-show" placeholder="Pick a time">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-info" onclick="getValidMovies()">Find Available Movies</button>
+                </div>
+            </div>
+        </div>
+    `);
+    $('#datepicker-manager-create-show').pickadate({
+        formatSubmit: 'yyyy/mm/dd',
+        hiddenName: true,
+        min: new Date(),
+        klass: { input: 'input' },
+        onSet: function(event) {
+            if (event.select) {
+                showDate = this.get('select', 'yyyy/mm/dd');
+                console.log("Show date set:", showDate);
+                $(this.$node).removeClass('is-danger').addClass('is-success');
+            }
+        }
+    });
+    $('#timepicker-manager-create-show').pickatime({
+        formatSubmit: 'HHi',
+        hiddenName: true,
+        interval: 15,
+        min: [8, 0],
+        max: [22, 0],
+        klass: { input: 'input' },
+        onSet: function(event) {
+            if (event.select || event.highlight) {
+                const selectedTime = this.get('select');
+                if(selectedTime) {
+                    showTime = selectedTime.hour * 100 + selectedTime.mins;
+                    console.log("Show time set:", showTime);
+                    $(this.$node).removeClass('is-danger').addClass('is-success');
+                } else {
+                    showTime = null;
+                }
+            }
+        }
+    });
+    $('#manager-dynamic-2, #manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+    $('#manager-dynamic-1').closest('.section').removeClass('is-hidden');
+}
+
+function getValidMovies() {
+    console.log("Manager: Getting valid movies for date/time selection.");
+    let errors = false;
+    if (!showDate) {
+        $('#datepicker-manager-create-show').addClass('is-danger');
+        errors = true;
+    } else {
+        $('#datepicker-manager-create-show').removeClass('is-danger');
+    }
+    if (showTime === null || showTime === undefined) {
+        $('#timepicker-manager-create-show').addClass('is-danger');
+        errors = true;
+    } else {
+        $('#timepicker-manager-create-show').removeClass('is-danger');
+    }
+    if (errors) {
+        $('#manager-dynamic-2').html(createNotification('Please select both a date and time first.', 'is-warning'));
+        return;
+    }
+    console.log("Finding movies available on", showDate, "at", showTime);
+    $('#manager-dynamic-1 input, #manager-dynamic-1 button').prop('disabled', true);
+    $('#manager-dynamic-1 button').addClass('is-loading');
+    $('#manager-dynamic-2').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getValidMovies',
+        data: {
+            'showDate': showDate
+        },
+        success: function(response) {
+            $('#manager-dynamic-1 button').removeClass('is-loading');
+            $('#manager-dynamic-2').html(response);
+            $('#manager-dynamic-2 button').addClass('button is-link m-1');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("getValidMovies AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-2').html(createNotification('Could not load available movies. Please try again.', 'is-warning'));
+            $('#manager-dynamic-1 input, #manager-dynamic-1 button').prop('disabled', false);
+            $('#manager-dynamic-1 button').removeClass('is-loading');
+        }
+    });
+    $('#manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+}
+
+function selectShowMovie(movID, availableTypes) {
+    movieID = movID;
+    console.log("Manager: Selected movie", movieID, "Available types:", availableTypes);
+    $('#manager-dynamic-2 button').prop('disabled', true);
+    let typesHtml = '<h4 class="title is-5 mt-4 mb-3">Select Movie Type For Show</h4><div class="buttons">';
+    availableTypes.split(' ').forEach(function(t) {
+        if (t) {
+            typesHtml += `<button class="button is-success" onclick="selectShowType('${t}')">${t}</button>`;
+        }
+    });
+    typesHtml += '</div>';
+    $('#manager-dynamic-3').html(typesHtml);
+    $('#manager-dynamic-4, #manager-dynamic-5').html('');
+}
+
+function selectShowType(t) {
+    type = t;
+    console.log("Manager: Selected type", type, "for movie", movieID, "on", showDate, "at", showTime);
+    $('#manager-dynamic-4').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getHallsAvailable',
+        data: {
+            'showDate': showDate,
+            'showTime': showTime,
+            'movieID': movieID
+        },
+        success: function(response) {
+            $('#manager-dynamic-3 button').prop('disabled', true);
+            $('#manager-dynamic-4').html(response);
+            $('#manager-dynamic-4 button').addClass('button is-primary m-1');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("selectShowType AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-4').html(createNotification('Could not check hall availability. Please try again.', 'is-warning'));
+        }
+    });
+    $('#manager-dynamic-5').html('');
+}
+
+function selectShowHall(hallID) {
+    console.log("Manager: Selected Hall", hallID, "for scheduling show.");
+    $('#manager-dynamic-5').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+    $('#manager-dynamic-4 button').prop('disabled', true).addClass('is-loading');
+
+    $.ajax({
+        type: 'POST',
+        url: '/insertShow',
+        data: {
+            'hallID': hallID,
+            'movieType': type,
+            'showDate': showDate,
+            'showTime': showTime,
+            'movieID': movieID
+        },
+        success: function(response) {
+            $('#manager-dynamic-4 button').removeClass('is-loading').prop('disabled', true);
+            $('#manager-dynamic-5').html(response);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("selectShowHall AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-5').html(createNotification('Failed to schedule the show. Please try again.', 'is-danger'));
+            $('#manager-dynamic-4 button').removeClass('is-loading').prop('disabled', false);
+        }
+    });
+}
+
+function alterPricing() {
+    console.log("Manager action: Alter Pricing");
+    $('#options button').prop('disabled', true);
+    $('#options button.is-info').removeClass('is-info').addClass('is-light');
+    $('#manager-dynamic-1').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    $.ajax({
+        type: 'GET',
+        url: '/getPriceList',
+        success: function(response) {
+            $('#manager-dynamic-1').html('<div class="box">' + response + '</div>');
+            $('#manager-dynamic-1 .price-item').addClass('block');
+            $('#manager-dynamic-1 .button').addClass('button is-link is-small ml-3');
+            $('#manager-dynamic-1 table').addClass('table is-fullwidth is-striped');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("alterPricing AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-1').html(createNotification('Could not load the current price list.', 'is-warning'));
+        }
+    });
+    $('#manager-dynamic-2, #manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+    $('#manager-dynamic-1').closest('.section').removeClass('is-hidden');
+}
+
+function alterPrice(mpriceID) {
+    priceID = mpriceID;
+    console.log("Manager: Altering price for priceID:", priceID);
+    $('#manager-dynamic-1 button').prop('disabled', true);
+    $('#manager-dynamic-2').html(`
+        <div class="box mt-4">
+             <h5 class="title is-6 mb-3">Set New Price for ID ${priceID}</h5>
+             <div class="field">
+                <label class="label" for="new_price_input">New Price (Standard Seat Base)</label>
+                <div class="control has-icons-left">
+                     <input class="input" type="number" name="new_price" id="new_price_input" placeholder="Enter new base price" min="0" step="1">
+                     <span class="icon is-small is-left">
+                        <i class="fas fa-rupee-sign"></i> </span>
+                </div>
+                <p class="help">Premium seats might have a different final price based on this.</p>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary" onclick="changePrice()">Change Price</button>
+                </div>
+            </div>
+        </div>
+    `);
+    $('#manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+}
+
+function changePrice() {
+    var newPrice = $('input[name="new_price"]').val();
+    console.log("Manager: Setting new price", newPrice, "for priceID", priceID);
+    $('#manager-dynamic-3').html('');
+    $('input[name="new_price"]').removeClass('is-danger');
+
+    if (newPrice === '' || newPrice === null || !$.isNumeric(newPrice) || parseFloat(newPrice) < 0) {
+        $('input[name="new_price"]').addClass('is-danger');
+        $('#manager-dynamic-3').html(createNotification('Please enter a valid, non-negative price.', 'is-warning'));
+        return;
+    }
+    $('#manager-dynamic-2 input, #manager-dynamic-2 button').prop('disabled', true);
+    $('#manager-dynamic-2 button').addClass('is-loading');
+
+    $.ajax({
+        type: 'POST',
+        url: '/setNewPrice',
+        data: {
+            'priceID': priceID,
+            'newPrice': newPrice
+        },
+        success: function(response) {
+            $('#manager-dynamic-3').html(response);
+            $('#manager-dynamic-2 button').removeClass('is-loading');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("changePrice AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-3').html(createNotification('Failed to update the price. Please try again.', 'is-danger'));
+            $('#manager-dynamic-2 input, #manager-dynamic-2 button').prop('disabled', false);
+            $('#manager-dynamic-2 button').removeClass('is-loading');
+        }
+    });
+}

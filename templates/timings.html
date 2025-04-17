@@ -1,0 +1,11 @@
+<h4 class="title is-4 has-text-centered mb-4">Available Timings</h4>
+
+<div class="buttons is-centered is-multiline mb-5">
+
+    {% for time in timings %}
+        <button class="button is-success" onclick="selectTiming({{ time[0] }})">
+             {{ time[1] }}:{{ "%02d"|format(time[2]|int) }}
+        </button>
+    {% endfor %}
+
+</div>

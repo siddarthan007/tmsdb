@@ -1,0 +1,11 @@
+<h4 class="title is-4 has-text-centered mb-4">Shows Showing</h4>
+
+<div class="buttons is-centered is-multiline mb-5">
+
+    {% for show in shows %}
+        <button class="button is-success" onclick="selectShow({{ show[0] }})">
+            {{ show[1] }} ({{ show[2] }}) at {{ show[3] }}:{{ "%02d"|format(show[4]|int) }}
+        </button>
+    {% endfor %}
+
+</div>
