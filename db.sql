@@ -53,8 +53,12 @@ CREATE TABLE booked_tickets (
     ticket_no INT PRIMARY KEY,
     show_id INT NOT NULL,
     seat_no INT NOT NULL,
+    customer_name VARCHAR(100) NULL,
+    customer_phone VARCHAR(20) NULL,
+    booking_ref VARCHAR(20) NULL,
     FOREIGN KEY (show_id) REFERENCES shows(show_id) ON DELETE CASCADE,
-    UNIQUE KEY `unique_show_seat` (`show_id`, `seat_no`)
+    UNIQUE KEY `unique_show_seat` (`show_id`, `seat_no`),
+    INDEX `idx_booking_ref` (`booking_ref`)
 );
 
 CREATE TABLE types (

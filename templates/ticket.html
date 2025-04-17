@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html class="has-background-black-ter">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your Ticket - {{ data.show_info.movie_name }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bulma.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='icons/css/all.css') }}">
+    <style>
+        body.dark-ticket-body { background-color: #1f1f1f !important; color: #f5f5f5 !important; font-size: 11pt; line-height: 1.6; }
+        .dark-ticket-body .ticket-card { background-color: #2a2a2a; border: 1px solid #444; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin: 30px auto; max-width: 700px; }
+        .dark-ticket-body .ticket-card .title, .dark-ticket-body .ticket-card .subtitle, .dark-ticket-body .ticket-card p, .dark-ticket-body .ticket-card strong, .dark-ticket-body .ticket-card li, .dark-ticket-body .ticket-card th, .dark-ticket-body .ticket-card td { color: #f5f5f5 !important; }
+        .dark-ticket-body .ticket-card .subtitle { color: #aaa !important; }
+        .dark-ticket-body hr { background-color: #444; height: 1px; border: none; margin: 1.5rem 0; }
+        .dark-ticket-body .table { background-color: #333; color: #f5f5f5; }
+        .dark-ticket-body .table thead th { color: #f5f5f5; border-color: #555 !important; }
+        .dark-ticket-body .table tbody tr:nth-child(odd) { background-color: #383838; }
+        .dark-ticket-body .table td { border-color: #555 !important; vertical-align: middle; }
+        .dark-ticket-body .total-price strong { color: #48c78e !important; }
+        .qr-code-container { text-align: center; margin-top: 1rem; margin-bottom: 1rem;}
+        .qr-code-container img { background-color: white; padding: 5px; max-width: 150px; height: auto; } /* Add white background for contrast */
+
+        @media print {
+            body { background-color: white !important; color: black !important; font-size: 10pt; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            html, body { width: 210mm; height: auto; }
+            .no-print { display: none !important; }
+            .ticket-card { border: none !important; box-shadow: none !important; margin: 0 !important; padding: 10mm 5mm !important; max-width: 100% !important; width: 100% !important; background-color: white !important; }
+            .ticket-card .title, .ticket-card .subtitle, .ticket-card p, .ticket-card li, .ticket-card strong, .ticket-card th, .ticket-card td { color: black !important; }
+            .ticket-card .subtitle { color: #555 !important; }
+            hr { background-color: #ccc !important; margin: 1rem 0; }
+            .table { background-color: white !important; color: black !important; }
+            .table thead th { color: black !important; border-color: #ccc !important; }
+            .table tbody tr:nth-child(odd) { background-color: #f9f9f9 !important; }
+            .table td { border-color: #ccc !important; }
+            .total-price strong { color: black !important; }
+            .qr-code-container img { background-color: white; padding: 0px; max-width: 150px; } /* No padding for print */
+        }
+    </style>
+</head>
+<body class="dark-ticket-body">
+    {% if data %}
+    <div class="card ticket-card">
+        <header class="card-header" style="box-shadow: none;">
+             <p class="card-header-title is-centered is-size-4 has-text-weight-bold">
+                Booking Confirmation
+             </p>
+        </header>
+        <div class="card-content">
+            <div class="content">
+                 <div class="columns is-vcentered">
+                    <div class="column is-three-quarters">
+                        <p class="subtitle is-6 mb-1">Booking Reference:</p>
+                        <p><strong class="is-size-5 has-text-warning">{{ data.booking_ref }}</strong></p>
+                    </div>
+                    <div class="column qr-code-container">
+                         {% if data.qr_code_data %}
+                             <img src="{{ data.qr_code_data }}" alt="Booking QR Code">
+                         {% else %}
+                             <p class="is-size-7 has-text-danger">QR Code Error</p>
+                         {% endif %}
+                    </div>
+                 </div>
+
+                 <hr>
+
+                 <h2 class="title is-4 mb-1">{{ data.show_info.movie_name }}</h2>
+                 <p class="subtitle is-6 has-text-grey-light mb-4">({{ data.show_info.show_type }})</p>
+
+                <div class="columns is-mobile is-variable is-1">
+                    <div class="column">
+                        <p><strong class="has-text-grey-light">Date:</strong> {{ data.show_info.date }}</p>
+                        <p><strong class="has-text-grey-light">Time:</strong> {{ data.show_info.time }}</p>
+                        <p><strong class="has-text-grey-light">Hall:</strong> {{ data.show_info.hall_id }}</p>
+                    </div>
+                    <div class="column">
+                        {% if data.show_info.customer_name %}
+                        <p><strong class="has-text-grey-light">Name:</strong> {{ data.show_info.customer_name }}</p>
+                        {% endif %}
+                        {% if data.show_info.customer_phone %}
+                        <p><strong class="has-text-grey-light">Phone:</strong> {{ data.show_info.customer_phone }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <hr>
+                <h3 class="title is-5 mb-3">Your Seat(s):</h3>
+                <div class="table-container">
+                    <table class="table is-bordered is-striped is-narrow is-fullwidth is-hoverable">
+                         <thead>
+                            <tr>
+                                <th>Seat</th>
+                                <th>Ticket #</th>
+                                 <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in data.tickets %}
+                            <tr>
+                                <td>{{ ticket.seat_display }}</td>
+                                <td>{{ ticket.ticket_no }}</td>
+                                <td>₹{{ ticket.price }}</td>
+                            </tr>
+                            {% endfor %}
+                         </tbody>
+                    </table>
+                 </div>
+                <p class="title is-4 has-text-right mt-4 total-price">Total Price: <strong>₹{{ data.total_price }}</strong></p>
+                <hr>
+                 <p class="has-text-centered is-size-7 has-text-grey-light">Thank you for booking!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="has-text-centered mt-5 mb-5 no-print">
+        <button class="button is-success is-medium mr-2" onclick="window.print();">
+             <span class="icon"><i class="fas fa-print"></i></span>
+             <span>Print Ticket</span>
+        </button>
+        <button class="button is-light is-medium" onclick="window.close();">
+             <span class="icon"><i class="fas fa-times"></i></span>
+             <span>Close</span>
+        </button>
+    </div>
+    {% else %}
+     <div class="container has-text-centered mt-6">
+         <div class="notification is-danger is-light">
+             <p class="is-size-5">{{ error if error else 'Could not load ticket data.' }}</p>
+         </div>
+     </div>
+    {% endif %}
+</body>
+</html>

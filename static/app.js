@@ -5,6 +5,7 @@ var movieID = null;
 var type = null;
 var seatNo = null;
 var seatClass = null;
+let selectedSeats = [];
 var movieTime = null;
 var showID = null;
 var startShowing = null;
@@ -194,58 +195,103 @@ function getSeats() {
 }
 
 function selectSeat(no, sclass) {
-    seatNo = no;
-    seatClass = sclass;
-    console.log("Selected Seat:", seatNo, "Class:", seatClass, "for showID:", showID);
-    $('#available-seats .button.is-selected').removeClass('is-selected is-info').addClass('is-outlined is-primary');
-    $(`#seat-${sclass}-${no}`).removeClass('is-outlined is-primary').addClass('is-selected is-info');
+    const seatIndex = selectedSeats.findIndex(seat => seat.seatNo === no && seat.seatClass === sclass);
+    const seatButton = document.querySelector(`button[onclick="selectSeat(${no},'${sclass}')"]`);
+
+    if (!seatButton) return; // Safety check
+
+    if (seatIndex > -1) {
+        selectedSeats.splice(seatIndex, 1);
+        seatButton.classList.remove('is-success');
+        seatButton.classList.add('is-warning', 'is-light'); // Example: back to gold/standard light
+         if (sclass === 'standard') {
+             seatButton.classList.remove('is-warning');
+             seatButton.classList.add('is-info', 'is-light');
+         }
+    } else {
+        selectedSeats.push({ seatNo: no, seatClass: sclass });
+        seatButton.classList.remove('is-light', 'is-warning', 'is-info'); // Remove light/other colors
+        seatButton.classList.add('is-success'); // Selected color
+    }
+
+    console.log("Selected Seats:", selectedSeats);
+    updatePriceAndConfirmButton();
+}
+
+function updatePriceAndConfirmButton() {
     $('#price-and-confirm').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+
+    if (selectedSeats.length === 0) {
+         $('#price-and-confirm').html('<p class="has-text-centered">Please select one or more seats.</p>');
+         return;
+    }
+    if (!showID){
+         $('#price-and-confirm').html(createNotification('Error: Show ID not set. Please re-select movie/time.', 'is-danger'));
+         return;
+    }
 
     $.ajax({
         type: 'POST',
-        url: '/getPrice',
-        data: {
+        url: '/getTotalPrice',
+        contentType: 'application/json',
+        data: JSON.stringify({
             'showID': showID,
-            'seatClass': seatClass
-        },
+            'seats': selectedSeats
+        }),
         success: function(response) {
             $('#price-and-confirm').html(response);
-            $('#price-display').addClass('tag is-large is-success mb-3');
-            $('#confirm-button').addClass('button is-success');
+            let confirmButton = $('#confirm-booking-button');
+            if (confirmButton.length) {
+                 confirmButton.prop('disabled', selectedSeats.length === 0);
+            }
         },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.error("selectSeat AJAX error:", textStatus, errorThrown);
-            $('#price-and-confirm').html(createNotification('Could not retrieve price. Please try again.', 'is-warning'));
+        error: function(jqXHR) {
+            let errorMsg = 'Could not retrieve total price.';
+            if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                errorMsg = jqXHR.responseJSON.error;
+            }
+            $('#price-and-confirm').html(createNotification(errorMsg, 'is-warning'));
         }
     });
 }
 
 function confirmBooking() {
-    console.log("Confirming booking for Seat:", seatNo, seatClass, "Show:", showID);
-    if (!showID || !seatNo || !seatClass) {
-        $('#price-and-confirm .notification').remove();
-        $('#price-and-confirm').append(createNotification('Booking details incomplete. Please reselect seat.', 'is-warning'));
+    const customerName = $('#customerNameInput').val();
+    const customerPhone = $('#customerPhoneInput').val();
+
+    console.log("Confirming booking for Seats:", selectedSeats, "Show:", showID);
+
+    if (!showID || selectedSeats.length === 0) {
+        $('#price-and-confirm').append(createNotification('Please select a show and at least one seat.', 'is-warning'));
         return;
     }
-    $('#price-and-confirm button').prop('disabled', true).addClass('is-loading');
+
+    $('#confirm-booking-button').prop('disabled', true).addClass('is-loading');
 
     $.ajax({
         type: 'POST',
         url: '/insertBooking',
-        data: {
+        contentType: 'application/json',
+        data: JSON.stringify({
             'showID': showID,
-            'seatNo': seatNo,
-            'seatClass': seatClass
-        },
+            'selectedSeats': selectedSeats,
+            'customerName': customerName,
+            'customerPhone': customerPhone
+        }),
         success: function(response) {
-            $('#available-seats .button').prop('disabled', true);
+             $('#available-seats button').prop('disabled', true);
             $('#price-and-confirm').html(response);
         },
         error: function(jqXHR, textStatus, errorThrown) {
-            console.error("confirmBooking AJAX error:", textStatus, errorThrown);
-            $('#price-and-confirm .notification').remove();
-            $('#price-and-confirm').html(createNotification('Booking failed due to a network or server error. Please try again.', 'is-danger'));
-            $('#price-and-confirm button').prop('disabled', false).removeClass('is-loading');
+            let errorMsg = 'Booking failed due to a network or server error.';
+             if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                 errorMsg = jqXHR.responseJSON.error;
+             } else if (jqXHR.responseText) {
+                 errorMsg = jqXHR.responseText;
+             }
+            console.error("confirmBooking AJAX error:", textStatus, errorThrown, jqXHR.responseText);
+             $('#price-and-confirm').append(createNotification(`Booking Failed: ${errorMsg}`, 'is-danger'));
+             $('#confirm-booking-button').prop('disabled', false).removeClass('is-loading'); 
         }
     });
 }
@@ -380,8 +426,8 @@ function filledMovieForm() {
     var movieLenStr = $('input[name="movieLen"]').val();
     var movieLang = $('input[name="movieLang"]').val();
     var movieTypesStr = $('input[name="movieTypes"]').val().toUpperCase().trim();
-    var startDateSubmit = $('input[name="datepicker-manager-2_submit"]').val();
-    var endDateSubmit = $('input[name="datepicker-manager-3_submit"]').val();
+    var startDateSubmit = $('#datepicker-manager-2').val();
+    var endDateSubmit = $('#datepicker-manager-3').val();
     startShowing = startDateSubmit;
     endShowing = endDateSubmit;
     var errors = [];
@@ -569,13 +615,13 @@ function selectShowMovie(movID, availableTypes) {
     movieID = movID;
     console.log("Manager: Selected movie", movieID, "Available types:", availableTypes);
     $('#manager-dynamic-2 button').prop('disabled', true);
-    let typesHtml = '<h4 class="title is-5 mt-4 mb-3">Select Movie Type For Show</h4><div class="buttons">';
+    let typesHtml = '<h4 class="title is-5 mt-4 mb-3">Select Movie Type For Show</h4><div class="field"><div class="control">';
     availableTypes.split(' ').forEach(function(t) {
         if (t) {
             typesHtml += `<button class="button is-success" onclick="selectShowType('${t}')">${t}</button>`;
         }
     });
-    typesHtml += '</div>';
+    typesHtml += '</div></div>';
     $('#manager-dynamic-3').html(typesHtml);
     $('#manager-dynamic-4, #manager-dynamic-5').html('');
 }

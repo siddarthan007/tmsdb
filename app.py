@@ -1,3 +1,4 @@
+from datetime import datetime
 import mysql.connector
 from dotenv import dotenv_values
 from mysql.connector import Error
@@ -6,6 +7,10 @@ from random import randint
 import logging
 import os
 from functools import wraps
+import qrcode
+import io
+import base64
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -35,7 +40,7 @@ def format_time_tuple(time_int):
         return (None, None)
     
 def generate_id():
-    return randint(1_000_000_000, 9_999_999_999)
+    return randint(1_000_000, 9_999_999)
 
 def runQuery(query, params=None, fetch_one=False):
     results = None
@@ -294,52 +299,189 @@ def getPriceForClass():
 @app.route('/insertBooking', methods=['POST'])
 @login_required(role="cashier")
 def createBooking():
-    show_id_str = request.form.get('showID')
-    seat_no_str = request.form.get('seatNo')
-    seat_class = request.form.get('seatClass')
-    if not all([show_id_str, seat_no_str, seat_class]):
-        return render_bulma_notification('Missing booking information (Show ID, Seat No, or Class).', 'is-warning')
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid request format. JSON expected."}), 400
+
+    show_id_str = data.get('showID')
+    selected_seats = data.get('selectedSeats')
+    customer_name = data.get('customerName', '').strip()
+    customer_phone = data.get('customerPhone', '').strip()
+
+    if not all([show_id_str, selected_seats, customer_name, customer_phone]):
+        return render_bulma_notification('Missing booking information (Show ID or Selected Seats).', 'is-warning')
     try:
         show_id = int(show_id_str)
-        seat_display_no = int(seat_no_str)
-        if seat_class.lower() == 'gold':
-            seat_db_no = seat_display_no + GOLD_SEAT_THRESHOLD
-        elif seat_class.lower() == 'standard':
-            seat_db_no = seat_display_no
-        else:
-            return render_bulma_notification('Invalid seat class specified.', 'is-danger')
-        ticket_no = None
-        attempts = 0
-        max_attempts = 10
-        while attempts < max_attempts:
-            ticket_no = generate_id()
-            check_query = "SELECT ticket_no FROM booked_tickets WHERE ticket_no = %s"
-            existing = runQuery(check_query, (ticket_no,), fetch_one=True)
-            if not existing:
-                break
-            logging.warning(f"Ticket number collision for {ticket_no}, retrying...")
-            attempts += 1
-        else:
-            logging.error("Failed to generate a unique ticket number after multiple attempts.")
-            return render_bulma_notification('Error generating ticket number. Please try booking again.', 'is-danger')
-        insert_query = "INSERT INTO booked_tickets (ticket_no, show_id, seat_no) VALUES (%s, %s, %s)"
-        insert_result = runQuery(insert_query, (ticket_no, show_id, seat_db_no))
-        if isinstance(insert_result, list) and not insert_result:
-            return f'''
-                <div class="notification is-success is-light has-text-centered">
-                    <p class="is-size-5 has-text-weight-semibold mb-1">Ticket Successfully Booked!</p>
-                    <p class="is-size-6">Ticket Number: <strong>{ticket_no}</strong></p>
-                    <p class="is-size-7">Seat: {seat_display_no} ({seat_class.capitalize()})</p>
-                </div>
-            '''
-        else:
-            logging.error(f"Booking insertion potentially failed for show {show_id}, seat {seat_db_no}. runQuery returned: {insert_result}")
-            return render_bulma_notification('Booking Failed. The seat might have just been taken, or a database error occurred.', 'is-danger')
+        booking_ref = str(generate_id())
+
+        booked_ticket_details = []
+
+        query = """
+            INSERT INTO booked_tickets
+            (ticket_no, show_id, seat_no, customer_name, customer_phone, booking_ref)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+
+        for seat in selected_seats:
+            seat_display_no = seat.get('seatNo')
+            seat_class = seat.get('seatClass', '').lower()
+
+            if seat_class.lower() == 'gold':
+                seat_db_no = seat_display_no + GOLD_SEAT_THRESHOLD
+            elif seat_class.lower() == 'standard':
+                seat_db_no = seat_display_no
+            else:
+                return render_bulma_notification('Invalid seat class specified.', 'is-danger')
+            
+            ticket_no = None
+            attempts = 0
+            max_attempts = 5
+            while attempts < max_attempts:
+                ticket_no = generate_id()
+                check_query = "SELECT ticket_no FROM booked_tickets WHERE ticket_no = %s"
+                existing = runQuery(check_query, (ticket_no,), fetch_one=True)
+                if not existing:
+                    break
+                logging.warning(f"Ticket number collision for {ticket_no}, retrying...")
+                attempts += 1
+            else:
+                logging.error("Failed to generate a unique ticket number after multiple attempts.")
+                return render_bulma_notification('Error generating ticket number. Please try booking again.', 'is-danger')
+            
+            params = (
+                    ticket_no,
+                    show_id,
+                    seat_db_no,
+                    customer_name if customer_name else None,
+                    customer_phone if customer_phone else None,
+                    booking_ref
+            )
+            logging.info(f"Attempting to insert ticket: {params}")
+            result = runQuery(query, params)
+
+            if isinstance(result, list) and not result:
+                booked_ticket_details.append({
+                    "ticket_no": ticket_no,
+                    "seat_display": f"{seat_display_no} ({seat_class.capitalize()})"
+                })
+            else:
+                logging.error(f"Booking insertion potentially failed for show {show_id}, seat {seat_db_no}. runQuery returned: {result}")
+                return render_bulma_notification('Booking Failed. The seat might have just been taken, or a database error occurred.', 'is-danger')
+        
+        seats_booked_str = ", ".join([t["seat_display"] for t in booked_ticket_details])
+        ticket_url = url_for('show_ticket', booking_ref=booking_ref, _external=True)
+
+        success_html = f'''
+            <div class="notification is-success is-light has-text-centered">
+                <p class="is-size-5 has-text-weight-semibold mb-1">Booking Confirmed!</p>
+                <p class="is-size-6">Booking Reference: <strong>{booking_ref}</strong></p>
+                <p class="is-size-7">Seats Booked: {seats_booked_str}</p>
+                {'<p class="is-size-7">Name: ' + customer_name + '</p>' if customer_name else ''}
+                {'<p class="is-size-7">Phone: ' + customer_phone + '</p>' if customer_phone else ''}
+                <a href="{ticket_url}" class="button is-small is-link mt-2" target="_blank">View/Print Ticket(s)</a>
+            </div>
+        '''
+
+        return success_html
     except ValueError:
         return render_bulma_notification('Invalid numeric input for Show ID or Seat Number.', 'is-danger')
     except Exception as e:
         logging.error(f"Error during booking insertion: {e}")
         return render_bulma_notification('An unexpected error occurred during booking.', 'is-danger')
+
+    
+@app.route('/getTotalPrice', methods=['POST'])
+@login_required(role="cashier")
+def get_total_price():
+    data = request.get_json()
+    show_id_str = data.get('showID')
+    selected_seats = data.get('seats', [])
+
+    if not show_id_str or not selected_seats:
+        return jsonify({"error": "Missing Show ID or selected seats."}), 400
+
+    query = """
+        SELECT pl.price
+        FROM shows s
+        JOIN price_listing pl ON s.price_id = pl.price_id
+        WHERE s.show_id = %s
+    """
+    try:
+        show_id = int(show_id_str)
+        result = runQuery(query, (show_id,), fetch_one=True)
+    except ValueError:
+         return jsonify({"error": "Invalid Show ID."}), 400
+
+    if result is None or not result or result[0] is None:
+        return jsonify({"error": "Price not found for this show."}), 404
+
+    base_price = int(result[0])
+    total_price = 0
+    seat_details_html = ""
+
+    for seat in selected_seats:
+        seat_class = seat.get('seatClass', '').lower()
+        seat_no = seat.get('seatNo')
+        price = base_price
+        if seat_class == 'gold':
+            price = int(base_price * 1.5)
+        total_price += price
+        seat_details_html += f'<span class="tag is-info mr-1 mb-1">Seat {seat_no} ({seat_class.capitalize()}) - ₹{price}</span> '
+
+    return f'''
+        <div class="box has-background-darker p-4">
+    <h5 class="title is-4 has-text-warning has-text-centered">Booking Summary</h5>
+    <hr class="has-background-grey-dark">
+
+    <div class="mb-4 has-text-centered" id="selected-seats-display">
+        <p class="is-size-6 has-text-weight-semibold mb-2">Selected Seats:</p>
+        <div class="tags is-centered">
+             {seat_details_html if seat_details_html else '<span class="tag is-light">No seats selected</span>'}
+        </div>
+    </div>
+
+    <div class="has-text-centered mb-4">
+         <p class="is-size-5 has-text-weight-bold">Total Price: <span class="has-text-success">₹ {total_price}</span></p>
+    </div>
+
+    <hr class="has-background-grey-dark">
+
+    <div class="columns is-mobile is-centered">
+        <div class="column is-narrow" style="min-width: 250px;">
+            <div class="field">
+                <label class="label has-text-light" for="customerNameInput">Customer Name</label>
+                <div class="control has-icons-left">
+                    <input class="input" type="text" id="customerNameInput" placeholder="Enter name">
+                    <span class="icon is-left">
+                        <i class="fas fa-user"></i>
+                    </span>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label has-text-light" for="customerPhoneInput">Phone Number</label>
+                <div class="control has-icons-left">
+                    <input class="input" type="tel" id="customerPhoneInput" placeholder="Enter phone">
+                     <span class="icon is-left">
+                        <i class="fas fa-phone"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="field mt-5">
+        <div class="control has-text-centered">
+            <button id="confirm-booking-button" class="button is-success is-medium" onclick="confirmBooking()" {'disabled' if not selected_seats else ''}>
+                 <span class="icon is-small">
+                    <i class="fas fa-check"></i>
+                 </span>
+                 <span>Confirm Booking</span>
+            </button>
+        </div>
+    </div>
+</div>
+    '''
 
 @app.route('/getShowsShowingOnDate', methods=['POST'])
 @login_required(role="manager")
@@ -416,6 +558,10 @@ def insertMovie():
     end_showing = request.form.get('endShowing')
     if not all([movie_name, movie_len_str, movie_lang, types_str, start_showing, end_showing]):
         return render_bulma_notification('Missing required movie information.', 'is-warning')
+    
+    start_showing = datetime.strptime(start_showing, "%d %B, %Y").date()
+    end_showing = datetime.strptime(end_showing, "%d %B, %Y").date()
+    
     try:
         movie_len = int(movie_len_str)
         if movie_len <= 0: raise ValueError("Movie length must be positive.")
@@ -438,6 +584,7 @@ def insertMovie():
         VALUES (%s, %s, %s, %s, %s, %s)
     """
     movie_params = (movie_id, movie_name, movie_len, movie_lang, start_showing, end_showing)
+    print(movie_params)
     movie_insert_result = runQuery(insert_movie_query, movie_params)
     if not isinstance(movie_insert_result, list):
         logging.error(f"Movie insertion failed for {movie_name}. runQuery returned: {movie_insert_result}")
@@ -637,6 +784,115 @@ def setPrice():
     except Exception as e:
         logging.error(f"Error updating price {price_id_str}: {e}")
         return render_bulma_notification('An unexpected error occurred while updating the price.', 'is-danger')
+    
+@app.route('/ticket/<string:booking_ref>')
+@login_required(role="any")
+def show_ticket(booking_ref):
+    query = """
+        SELECT
+            bt.ticket_no, bt.seat_no, bt.customer_name, bt.customer_phone,
+            s.Date, s.time, s.type as show_type, s.show_id,
+            m.movie_name, m.length,
+            h.hall_id,
+            pl.price as base_standard_price
+        FROM booked_tickets bt
+        JOIN shows s ON bt.show_id = s.show_id
+        JOIN movies m ON s.movie_id = m.movie_id
+        JOIN halls h ON s.hall_id = h.hall_id
+        LEFT JOIN price_listing pl ON s.price_id = pl.price_id
+        WHERE bt.booking_ref = %s
+        GROUP BY bt.ticket_no, bt.seat_no, bt.customer_name, bt.customer_phone, s.Date, s.time, s.type, s.show_id, m.movie_name, m.length, h.hall_id, pl.price
+        ORDER BY bt.seat_no
+    """
+
+    results = runQuery(query, (booking_ref,))
+
+    if not results:
+        return render_template('ticket.html', data=None, error="Ticket not found or invalid reference.")
+
+    ticket_data = {
+        "booking_ref": booking_ref,
+        "tickets": [],
+        "show_info": None,
+        "qr_code_data": None
+    }
+    total_booking_price = 0
+    processed_ticket_nos = set()
+    qr_code_content_list = []
+
+    for row in results:
+        (ticket_no, seat_db_no, cust_name, cust_phone, show_date, show_time_int,
+         show_type, show_id, movie_name, movie_len, hall_id, base_price) = row
+
+        if ticket_no in processed_ticket_nos:
+            continue
+
+        if ticket_data["show_info"] is None:
+             hour, minute_str = format_time_tuple(show_time_int)
+             ticket_data["show_info"] = {
+                 "movie_name": movie_name,
+                 "show_type": show_type,
+                 "date": show_date.strftime('%Y-%m-%d') if show_date else "N/A",
+                 "time": f"{hour}:{minute_str}" if hour is not None else "N/A",
+                 "hall_id": hall_id,
+                 "customer_name": cust_name,
+                 "customer_phone": cust_phone,
+                 "show_id": show_id
+             }
+
+        seat_class = 'Standard'
+        seat_display_no = seat_db_no
+        seat_price = base_price if base_price is not None else 0
+        if seat_db_no > GOLD_SEAT_THRESHOLD:
+             seat_class = 'Gold'
+             seat_display_no = seat_db_no - GOLD_SEAT_THRESHOLD
+             if base_price is not None:
+                 seat_price = int(base_price * 1.5)
+
+        seat_display_str = f"{seat_display_no}({seat_class[0]})"
+        ticket_info = {
+            "ticket_no": ticket_no,
+            "seat_display": f"{seat_display_no} ({seat_class})",
+            "price": seat_price
+        }
+        ticket_data["tickets"].append(ticket_info)
+        qr_code_content_list.append(f"T{ticket_no}:S{seat_display_str}")
+
+        total_booking_price += seat_price
+        processed_ticket_nos.add(ticket_no)
+
+    ticket_data["total_price"] = total_booking_price
+
+    if ticket_data["show_info"]:
+        qr_data_string = f"Ref:{booking_ref}\n"
+        qr_data_string += f"Show:{ticket_data['show_info']['show_id']}\n"
+        qr_data_string += f"Date:{ticket_data['show_info']['date']}\n"
+        qr_data_string += ";".join(qr_code_content_list)
+
+        try:
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=6,
+                border=4,
+            )
+            qr.add_data(qr_data_string)
+            qr.make(fit=True)
+
+            img = qr.make_image(fill_color="black", back_color="white")
+
+            buffer = io.BytesIO()
+            img.save(buffer, format="PNG")
+            buffer.seek(0)
+
+            img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            ticket_data["qr_code_data"] = f"data:image/png;base64,{img_base64}"
+
+        except Exception as e:
+            logging.error(f"Failed to generate QR code for booking {booking_ref}: {e}")
+            ticket_data["qr_code_data"] = None 
+
+    return render_template('ticket.html', data=ticket_data)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
