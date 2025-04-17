@@ -951,11 +951,11 @@ def show_ticket(booking_ref):
 
         seat_code_display = db_no_to_seat_code(seat_db_no)
 
-        seat_class = 'standard'
+        seat_class = 'Standard'
         seat_display_no = seat_db_no
         seat_price = base_price if base_price is not None else 0
         if seat_db_no > GOLD_SEAT_THRESHOLD:
-             seat_class = 'gold'
+             seat_class = 'Gold'
              seat_display_no = seat_db_no - GOLD_SEAT_THRESHOLD
              if base_price is not None:
                  seat_price = int(base_price * 1.5)

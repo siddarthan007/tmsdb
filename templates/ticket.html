@@ -297,7 +297,7 @@
                          </div>
                          <div class="ticket-info-item">
                             <span class="icon"><i class="fas fa-door-open fa-fw"></i></span>
-                            <strong>{{ data.show_info.hall_name }}</strong> {# Display hall_name #}
+                            <strong>{{ data.show_info.hall_name }}</strong>
                         </div>
                          {% if data.show_info.customer_name %}
                          <div class="ticket-info-item mt-4">
@@ -339,7 +339,7 @@
                             <tr>
                                 <td>
                                     <span class="icon is-small mr-1">
-                                        {% if ticket.class == 'gold' %}
+                                        {% if ticket.class == 'Gold' %}
                                             <i class="fas fa-star has-text-warning"></i>
                                         {% else %}
                                             <i class="fas fa-couch has-text-info"></i>
