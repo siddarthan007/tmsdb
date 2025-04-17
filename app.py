@@ -725,7 +725,6 @@ def insertShow():
                 <div class="notification is-success is-light has-text-centered">
                     <p class="is-size-5 has-text-weight-semibold mb-1">Show Successfully Scheduled</p>
                     <p class="is-size-6">Show ID: <strong>{show_id}</strong></p>
-                    <p class="is-size-7">(Price needs to be assigned if not automatic)</p>
                 </div>
             '''
         else:
@@ -784,6 +783,64 @@ def setPrice():
     except Exception as e:
         logging.error(f"Error updating price {price_id_str}: {e}")
         return render_bulma_notification('An unexpected error occurred while updating the price.', 'is-danger')
+    
+@app.route('/getBookingsByDate', methods=['POST'])
+@login_required(role="manager")
+def getBookingsByDate():
+    show_date_str = request.form.get('date')
+    if not show_date_str:
+        return render_bulma_notification('Invalid date provided.', 'is-warning')
+
+    try:
+        try:
+            show_date_obj = datetime.strptime(show_date_str, '%Y/%m/%d')
+            show_date_sql = show_date_obj.strftime('%Y-%m-%d')
+        except ValueError:
+             show_date_obj = datetime.strptime(show_date_str, '%Y-%m-%d')
+             show_date_sql = show_date_obj.strftime('%Y-%m-%d')
+    except ValueError:
+        logging.error(f"Invalid date format received for booking lookup: {show_date_str}")
+        return render_bulma_notification('Invalid date format. Please use YYYY/MM/DD or YYYY-MM-DD.', 'is-danger')
+
+    query = """
+        SELECT
+            bt.booking_ref,
+            bt.customer_name,
+            bt.customer_phone,
+            s.show_id,
+            m.movie_name,
+            s.time,
+            COUNT(bt.ticket_no) as num_tickets
+        FROM booked_tickets bt
+        JOIN shows s ON bt.show_id = s.show_id
+        JOIN movies m ON s.movie_id = m.movie_id
+        WHERE s.Date = %s
+        GROUP BY bt.booking_ref, bt.customer_name, bt.customer_phone, s.show_id, m.movie_name, s.time
+        ORDER BY s.time, bt.booking_ref
+    """
+
+    results = runQuery(query, (show_date_sql,))
+
+    if results is None:
+        return render_bulma_notification('Error retrieving booking data.', 'is-danger')
+    if not results:
+        return render_bulma_notification('No Bookings Found for this Date', 'is-info')
+
+    bookings_formatted = []
+    for row in results:
+        booking_ref, cust_name, cust_phone, show_id, movie_name, time_int, num_tickets = row
+        hour, minute_str = format_time_tuple(time_int)
+        show_time_formatted = f"{hour}:{minute_str}" if hour is not None else "N/A"
+        bookings_formatted.append({
+            "booking_ref": booking_ref,
+            "customer_name": cust_name if cust_name else "N/A",
+            "customer_phone": cust_phone if cust_phone else "N/A",
+            "movie_name": movie_name,
+            "show_time": show_time_formatted,
+            "num_tickets": num_tickets
+        })
+
+    return render_template('groupedBookings.html', bookings=bookings_formatted, booking_date=show_date_sql)
     
 @app.route('/ticket/<string:booking_ref>')
 @login_required(role="any")

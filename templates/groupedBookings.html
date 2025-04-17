@@ -1,0 +1,43 @@
+<div class="box has-background-darker">
+    <h4 class="title is-4 has-text-centered has-text-light">Bookings for {{ booking_date }}</h4>
+
+    {% if bookings %}
+    <div class="table-container">
+        <table class="table is-fullwidth is-bordered is-striped is-narrow is-hoverable is-dark is-size-6">
+            <thead>
+                <tr>
+                    <th>Booking Ref</th>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Movie</th>
+                    <th>Show Time</th>
+                    <th># Tickets</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.booking_ref }}</td>
+                    <td>{{ booking.customer_name }}</td>
+                    <td>{{ booking.customer_phone }}</td>
+                    <td>{{ booking.movie_name }}</td>
+                    <td>{{ booking.show_time }}</td>
+                    <td class="has-text-centered">{{ booking.num_tickets }}</td>
+                    <td class="has-text-centered">
+                        <a href="{{ url_for('show_ticket', booking_ref=booking.booking_ref) }}" class="button is-info is-small" target="_blank" title="View E-Ticket">
+                            <span class="icon is-small">
+                                <i class="fas fa-ticket-alt"></i>
+                            </span>
+                            <span>View</span>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="has-text-centered has-text-grey-light">No booking data found for this date.</p>
+    {% endif %}
+</div>

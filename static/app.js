@@ -298,31 +298,62 @@ function confirmBooking() {
 
 function viewBookedTickets() {
     console.log("Manager action: View Booked Tickets");
+    $('#manager-dynamic-1, #manager-dynamic-2, #manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
     $('#options button').prop('disabled', true);
     $('#options button.is-info').removeClass('is-info').addClass('is-light');
+    $('#options button[onclick="viewBookedTickets()"]').removeClass('is-light').addClass('is-info');
     $('#manager-dynamic-1').html(`
         <div class="box">
-            <h4 class="title is-5 mb-4">View Booked Tickets</h4>
+            <h4 class="title is-5 mb-4 has-text-light">View Bookings By Date</h4>
             <div class="field">
-                <label class="label" for="datepicker-manager-1">Select Date to View Bookings</label>
-                <div class="control">
+                <label class="label has-text-light" for="datepicker-manager-1">Select Date</label>
+                <div class="control has-icons-left">
                     <input class="input" id="datepicker-manager-1" placeholder="Pick a date">
+                    <span class="icon is-small is-left"><i class="fas fa-calendar-alt"></i></span>
                 </div>
             </div>
+            <p class="help has-text-grey-light">Select a date to see all booking transactions made for shows on that day.</p>
         </div>`);
+
     $('#datepicker-manager-1').pickadate({
         formatSubmit: 'yyyy/mm/dd',
+        format: 'd mmmm, yyyy',
         hiddenName: true,
         klass: { input: 'input' },
         onSet: function(event) {
             if (event.select) {
-                $('#datepicker-manager-1').prop('disabled', true);
-                getShowsShowingOnDate(this.get('select', 'yyyy/mm/dd'));
+                const selectedDate = this.get('select', 'yyyy/mm/dd');
+                $('#datepicker-manager-view-bookings').prop('disabled', true);
+                fetchGroupedBookings(selectedDate);
             }
+        },
+        onClose: function() {
+            $('#options button').prop('disabled', false);
         }
     });
-    $('#manager-dynamic-2, #manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
-    $('#manager-dynamic-1').closest('.section').removeClass('is-hidden');
+    $('#datepicker-manager-view-bookings').trigger('focus');
+}
+
+function fetchGroupedBookings(selectedDate) {
+    console.log("Manager: Fetching grouped bookings for date:", selectedDate);
+    $('#manager-dynamic-2').html('<progress class="progress is-small is-info" max="100">15%</progress>');
+    $('#manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
+
+    $.ajax({
+        type: 'POST',
+        url: '/getBookingsByDate',
+        data: { 'date': selectedDate },
+        success: function(response) {
+            $('#manager-dynamic-2').html(response);
+            $('#options button').prop('disabled', false);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error("fetchGroupedBookings AJAX error:", textStatus, errorThrown);
+            $('#manager-dynamic-2').html(createNotification('Could not load bookings for this date.', 'is-warning'));
+            $('#options button').prop('disabled', false);
+            $('#datepicker-manager-view-bookings').prop('disabled', false);
+        }
+    });
 }
 
 function getShowsShowingOnDate(mdate) {
