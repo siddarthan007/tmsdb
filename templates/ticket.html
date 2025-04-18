@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html class="has-background-black-ter">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,6 +18,27 @@
             padding-bottom: 2rem;
         }
 
+        /* Add inside the <style> tag */
+        .dark-ticket-body .dark-theme-summary-table td {
+            border: none !important;
+            /* Remove borders for cleaner look */
+            color: #e0e0e0 !important;
+            padding-top: 0.3rem;
+            padding-bottom: 0.3rem;
+        }
+
+        .dark-ticket-body .dark-theme-summary-table .total-price-row td {
+            padding-top: 0.6rem;
+            border-top: 1px solid #4a4a4a !important;
+        }
+
+        .dark-ticket-body .total-price strong {
+            color: #4cd964 !important;
+            /* Keep final price green */
+            font-size: 1.1em;
+            /* Make it slightly larger within its context */
+        }
+
         .dark-ticket-body .ticket-card {
             background: linear-gradient(145deg, #2c2c2c, #252525);
             border-radius: 15px;
@@ -27,26 +49,25 @@
             overflow: hidden;
             position: relative;
         }
+
         .dark-ticket-body .ticket-card::before {
             content: '';
             position: absolute;
-            left: 40px; 
+            left: 40px;
             top: 0;
             bottom: 0;
             width: 2px;
-            background: repeating-linear-gradient(
-                to bottom,
-                #444,
-                #444 5px,
-                transparent 5px,
-                transparent 10px
-            );
+            background: repeating-linear-gradient(to bottom,
+                    #444,
+                    #444 5px,
+                    transparent 5px,
+                    transparent 10px);
         }
 
 
         .dark-ticket-body .card-header {
-            background: transparent; 
-            padding: 1.5rem 1.5rem 0.5rem 1.5rem; 
+            background: transparent;
+            padding: 1.5rem 1.5rem 0.5rem 1.5rem;
             border-bottom: none;
             text-align: center;
         }
@@ -60,9 +81,10 @@
             display: block;
             padding-bottom: 0.5rem;
         }
-        .dark-ticket-body .card-header-icon { 
-             color: #ffcc00;
-             font-size: 1.5rem;
+
+        .dark-ticket-body .card-header-icon {
+            color: #ffcc00;
+            font-size: 1.5rem;
         }
 
         .dark-ticket-body .ticket-card .card-content {
@@ -93,15 +115,15 @@
         }
 
         .dark-ticket-body .table {
-            background-color: rgba(0,0,0,0.1); 
+            background-color: rgba(0, 0, 0, 0.1);
             color: #e0e0e0;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         .dark-ticket-body .table thead th {
-            background-color: rgba(0,0,0,0.2);
+            background-color: rgba(0, 0, 0, 0.2);
             color: #ccc;
             border-color: #4a4a4a !important;
             text-transform: uppercase;
@@ -111,10 +133,11 @@
         }
 
         .dark-ticket-body .table tbody tr {
-             background-color: transparent !important; 
+            background-color: transparent !important;
         }
+
         .dark-ticket-body .table tbody tr:hover {
-             background-color: rgba(255,255,255,0.05) !important;
+            background-color: rgba(255, 255, 255, 0.05) !important;
         }
 
 
@@ -128,6 +151,7 @@
             text-align: center;
             margin-bottom: 1rem;
         }
+
         .booking-ref {
             background-color: rgba(255, 204, 0, 0.15);
             padding: 10px 15px;
@@ -137,7 +161,7 @@
         }
 
         .booking-ref-text {
-            color: #ffdd57 !important; 
+            color: #ffdd57 !important;
             font-weight: 700;
             letter-spacing: 1.5px;
         }
@@ -149,10 +173,11 @@
             color: #ffffff !important;
             text-align: center;
         }
-         .movie-subtitle {
-             text-align: center;
-             margin-bottom: 1.5rem !important;
-         }
+
+        .movie-subtitle {
+            text-align: center;
+            margin-bottom: 1.5rem !important;
+        }
 
         .dark-ticket-body .total-price strong {
             color: #4cd964 !important;
@@ -166,18 +191,19 @@
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            background-color: rgba(0,0,0,0.1);
+            background-color: rgba(0, 0, 0, 0.1);
             border-radius: 8px;
         }
 
         .qr-code-area img {
             background-color: white;
             padding: 8px;
-            max-width: 140px; 
+            max-width: 140px;
             height: auto;
             border-radius: 6px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         .qr-code-area p {
             font-size: 0.75rem;
             margin-top: 0.5rem;
@@ -191,20 +217,22 @@
             margin-bottom: 0.6rem;
             font-size: 0.95rem;
         }
+
         .ticket-info-item .icon {
-            color: #7a7a7a; 
+            color: #7a7a7a;
             margin-right: 0.75rem;
             width: 20px;
             text-align: center;
         }
-         .ticket-info-item strong {
+
+        .ticket-info-item strong {
             color: #ccc !important;
-         }
+        }
 
 
         .ticket-details-section {
             margin-bottom: 1.5rem;
-            padding: 0; 
+            padding: 0;
         }
 
         .button.is-success {
@@ -231,54 +259,222 @@
             color: #fff;
         }
 
+        .price-summary .level {
+            margin-bottom: 0.5rem;
+            /* Adjust spacing between lines */
+        }
+
+        .price-summary hr.is-divider {
+            border-top: 1px solid #4a4a4a;
+            background-color: transparent;
+        }
+
 
         @media print {
-             body { background-color: white !important; color: black !important; font-size: 10pt; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: Arial, sans-serif; }
-             html, body { width: 100%; height: auto; }
-             .no-print { display: none !important; }
-             .ticket-card { border: 1px solid #ccc !important; box-shadow: none !important; margin: 0 !important; padding: 8mm !important; max-width: 100% !important; width: 100% !important; background-color: white !important; background: none !important; border-radius: 0 !important;}
-             .ticket-card::before { display: none; } 
-             .card-header { background: none !important; border-bottom: 1px solid #ccc !important; padding: 0.5rem 0 !important; }
-             .ticket-card .card-content { padding: 0.5rem 0 !important; }
-             .ticket-card .title, .ticket-card .subtitle, .ticket-card p, .ticket-card li, .ticket-card strong, .ticket-card th, .ticket-card td { color: black !important; }
-             .ticket-card .subtitle { color: #555 !important; }
-             .movie-title { background: none !important; -webkit-text-fill-color: #000 !important; color: #000 !important; font-size: 1.4rem !important; }
-             hr { background-color: #ccc !important; margin: 0.8rem 0; }
-             .table { background-color: white !important; color: black !important; box-shadow: none; }
-             .table thead th { color: black !important; border-color: #ccc !important; background-color: #f0f0f0 !important; font-size: 0.75rem; padding: 0.5rem; }
-             .table tbody tr:nth-child(odd) { background-color: #f9f9f9 !important; }
-             .table td { border-color: #ccc !important; padding: 0.5rem; font-size: 0.9rem;}
-             .total-price strong { color: black !important; font-size: 1.1rem; }
-             .qr-code-area { background-color: transparent !important; padding: 0.5rem 0;}
-             .qr-code-area img { background-color: white; padding: 2px; max-width: 120px; box-shadow: none; }
-             .qr-code-area p { display: none; }
-             .booking-ref { background-color: transparent !important; border: 1px solid #ccc !important; padding: 5px;}
-             .booking-ref-text { color: black !important; font-size: 1.1rem;}
-             .ticket-details-section { background-color: transparent !important; border: none !important; padding: 0 !important; }
-             .ticket-info-item { font-size: 0.9rem; margin-bottom: 0.4rem; }
-             .ticket-info-item .icon { color: #444 !important; }
-             .ticket-info-item strong { color: #333 !important; }
+            body {
+                background-color: white !important;
+                color: black !important;
+                font-size: 10pt;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-family: Arial, sans-serif;
+            }
+
+            html,
+            body {
+                width: 100%;
+                height: auto;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .ticket-card {
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 8mm !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                background-color: white !important;
+                background: none !important;
+                border-radius: 0 !important;
+            }
+
+            .ticket-card::before {
+                display: none;
+            }
+
+            .card-header {
+                background: none !important;
+                border-bottom: 1px solid #ccc !important;
+                padding: 0.5rem 0 !important;
+            }
+
+            .ticket-card .card-content {
+                padding: 0.5rem 0 !important;
+            }
+
+            .ticket-card .title,
+            .ticket-card .subtitle,
+            .ticket-card p,
+            .ticket-card li,
+            .ticket-card strong,
+            .ticket-card th,
+            .ticket-card td {
+                color: black !important;
+            }
+
+            .ticket-card .subtitle {
+                color: #555 !important;
+            }
+
+            .movie-title {
+                background: none !important;
+                -webkit-text-fill-color: #000 !important;
+                color: #000 !important;
+                font-size: 1.4rem !important;
+            }
+
+            hr {
+                background-color: #ccc !important;
+                margin: 0.8rem 0;
+            }
+
+            .table {
+                background-color: white !important;
+                color: black !important;
+                box-shadow: none;
+            }
+
+            .table thead th {
+                color: black !important;
+                border-color: #ccc !important;
+                background-color: #f0f0f0 !important;
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+
+            .dark-theme-summary-table td {
+                border: none !important;
+                color: black !important;
+                padding: 0.1rem 0.2rem !important;
+            }
+
+            .dark-theme-summary-table .total-price-row td {
+                padding-top: 0.3rem !important;
+                border-top: 1px solid #ccc !important;
+                font-weight: bold;
+            }
+
+            .total-price strong {
+                color: black !important;
+                font-size: 1.1em;
+            }
+
+            .table tbody tr:nth-child(odd) {
+                background-color: #f9f9f9 !important;
+            }
+
+            .table td {
+                border-color: #ccc !important;
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .total-price strong {
+                color: black !important;
+                font-size: 1.1rem;
+            }
+
+            .qr-code-area {
+                background-color: transparent !important;
+                padding: 0.5rem 0;
+            }
+
+            .qr-code-area img {
+                background-color: white;
+                padding: 2px;
+                max-width: 120px;
+                box-shadow: none;
+            }
+
+            .qr-code-area p {
+                display: none;
+            }
+
+            .booking-ref {
+                background-color: transparent !important;
+                border: 1px solid #ccc !important;
+                padding: 5px;
+            }
+
+            .booking-ref-text {
+                color: black !important;
+                font-size: 1.1rem;
+            }
+
+            .ticket-details-section {
+                background-color: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+
+            .ticket-info-item {
+                font-size: 0.9rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .ticket-info-item .icon {
+                color: #444 !important;
+            }
+
+            .ticket-info-item strong {
+                color: #333 !important;
+            }
+
+            .price-summary .level {
+                margin-bottom: 0.2rem !important;
+                font-size: 0.9rem;
+            }
+
+            .price-summary hr.is-divider {
+                border-top: 1px solid #ccc !important;
+                margin: 0.4rem 0 !important;
+            }
+
+            .total-price-row p {
+                font-size: 1rem !important;
+            }
+
+            .total-price strong {
+                color: black !important;
+            }
         }
     </style>
 </head>
+
 <body class="dark-ticket-body">
     {% if data %}
     <div class="card ticket-card">
-         <div class="card-content">
+        <div class="card-content">
             <div class="content">
-                 <header class="card-header mb-4">
+                <header class="card-header mb-4">
                     <p class="card-header-title">
                         <span class="icon card-header-icon mr-2"><i class="fas fa-ticket-alt"></i></span>
-                         Booking Confirmation
+                        Booking Confirmation
                     </p>
-                 </header>
+                </header>
 
-                 <div class="booking-ref-area">
-                     <span class="subtitle is-6 has-text-grey-light">Booking Reference</span><br>
-                     <div class="booking-ref mt-1">
-                         <span class="booking-ref-text is-size-5">{{ data.booking_ref }}</span>
-                     </div>
-                 </div>
+                <div class="booking-ref-area">
+                    <span class="subtitle is-6 has-text-grey-light">Booking Reference</span><br>
+                    <div class="booking-ref mt-1">
+                        <span class="booking-ref-text is-size-5">{{ data.booking_ref }}</span>
+                    </div>
+                </div>
 
                 <hr>
 
@@ -287,38 +483,38 @@
 
                 <div class="columns is-variable is-4">
                     <div class="column is-two-thirds ticket-details-section">
-                         <div class="ticket-info-item">
-                             <span class="icon"><i class="fas fa-calendar-alt fa-fw"></i></span>
-                             <strong>{{ data.show_info.date }}</strong>
-                         </div>
-                          <div class="ticket-info-item">
-                             <span class="icon"><i class="fas fa-clock fa-fw"></i></span>
-                              <strong>{{ data.show_info.time }}</strong>
-                         </div>
-                         <div class="ticket-info-item">
+                        <div class="ticket-info-item">
+                            <span class="icon"><i class="fas fa-calendar-alt fa-fw"></i></span>
+                            <strong>{{ data.show_info.date }}</strong>
+                        </div>
+                        <div class="ticket-info-item">
+                            <span class="icon"><i class="fas fa-clock fa-fw"></i></span>
+                            <strong>{{ data.show_info.time }}</strong>
+                        </div>
+                        <div class="ticket-info-item">
                             <span class="icon"><i class="fas fa-door-open fa-fw"></i></span>
                             <strong>{{ data.show_info.hall_name }}</strong>
                         </div>
-                         {% if data.show_info.customer_name %}
-                         <div class="ticket-info-item mt-4">
+                        {% if data.show_info.customer_name %}
+                        <div class="ticket-info-item mt-4">
                             <span class="icon"><i class="fas fa-user fa-fw"></i></span>
                             <span>{{ data.show_info.customer_name }}</span>
-                         </div>
-                         {% endif %}
-                         {% if data.show_info.customer_phone %}
-                         <div class="ticket-info-item">
+                        </div>
+                        {% endif %}
+                        {% if data.show_info.customer_phone %}
+                        <div class="ticket-info-item">
                             <span class="icon"><i class="fas fa-phone fa-fw"></i></span>
                             <span>{{ data.show_info.customer_phone }}</span>
-                         </div>
-                         {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
-                     <div class="column is-one-third qr-code-area">
-                         {% if data.qr_code_data %}
-                             <img src="{{ data.qr_code_data }}" alt="Booking QR Code">
-                             <p>Scan at Entry</p>
-                         {% else %}
-                             <p class="is-size-7 has-text-danger">QR Code Error</p>
-                         {% endif %}
+                    <div class="column is-one-third qr-code-area">
+                        {% if data.qr_code_data %}
+                        <img src="{{ data.qr_code_data }}" alt="Booking QR Code">
+                        <p>Scan at Entry</p>
+                        {% else %}
+                        <p class="is-size-7 has-text-danger">QR Code Error</p>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -340,9 +536,9 @@
                                 <td>
                                     <span class="icon is-small mr-1">
                                         {% if ticket.class == 'Gold' %}
-                                            <i class="fas fa-star has-text-warning"></i>
+                                        <i class="fas fa-star has-text-warning"></i>
                                         {% else %}
-                                            <i class="fas fa-couch has-text-info"></i>
+                                        <i class="fas fa-couch has-text-info"></i>
                                         {% endif %}
                                     </span>
                                     {{ ticket.seat_display }}
@@ -351,11 +547,48 @@
                                 <td>₹{{ ticket.price }}</td>
                             </tr>
                             {% endfor %}
-                         </tbody>
+                        </tbody>
                     </table>
                 </div>
-                <p class="title is-4 has-text-right mt-4 total-price">Total Price: <strong>₹{{ data.total_price }}</strong></p>
-                <hr>
+                {% if data.pricing_info %}
+                <div class="price-summary mt-4">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <p class="has-text-grey">Base Price Total</p>
+                        </div>
+                        <div class="level-right">
+                            <p class="has-text-right">₹ {{ "%.2f"|format(data.pricing_info.pre_tax_total) }}</p>
+                        </div>
+                    </div>
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <p class="has-text-grey">CGST @ {{ data.pricing_info.cgst_rate_percent }}%</p>
+                        </div>
+                        <div class="level-right">
+                            <p class="has-text-right">₹ {{ "%.2f"|format(data.pricing_info.cgst_amount) }}</p>
+                        </div>
+                    </div>
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <p class="has-text-grey">SGST @ {{ data.pricing_info.sgst_rate_percent }}%</p>
+                        </div>
+                        <div class="level-right">
+                            <p class="has-text-right">₹ {{ "%.2f"|format(data.pricing_info.sgst_amount) }}</p>
+                        </div>
+                    </div>
+                    <hr class="is-divider" style="margin: 0.75rem 0;">
+                    <div class="level is-mobile total-price-row">
+                        <div class="level-left">
+                            <p class="has-text-weight-bold is-size-5">Grand Total</p>
+                        </div>
+                        <div class="level-right">
+                            <p class="has-text-right has-text-weight-bold is-size-5 total-price"><strong>₹ {{
+                                    "%.2f"|format(data.pricing_info.final_total) }}</strong></p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <hr class="mt-5">
                 <p class="has-text-centered is-size-7 has-text-grey-light">Thank you for booking!</p>
             </div>
         </div>
@@ -379,4 +612,5 @@
     </div>
     {% endif %}
 </body>
+
 </html>

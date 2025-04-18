@@ -461,7 +461,8 @@ def get_total_price():
     </div>
 
     <div class="has-text-centered mb-4">
-         <p class="is-size-5 has-text-weight-bold">Total Price: <span class="has-text-success">₹ {total_price}</span></p>
+         <p class="is-size-5 has-text-weight-bold">Total Price: <span class="has-text-success">₹ {total_price} </span></p>
+         <p class="is-size-6"> (excluding GSTs)</p>
     </div>
 
     <hr class="has-background-grey-dark">
@@ -923,11 +924,13 @@ def show_ticket(booking_ref):
         "booking_ref": booking_ref,
         "tickets": [],
         "show_info": None,
-        "qr_code_data": None
+        "qr_code_data": None,
+        "pricing_info": None
     }
-    total_booking_price = 0
+    total_pre_tax_price = 0
     processed_ticket_nos = set()
     qr_code_content_list = []
+    base_price_for_gst_calc = None
 
     for row in results:
         (ticket_no, seat_db_no, cust_name, cust_phone, show_date, show_time_int,
@@ -938,6 +941,7 @@ def show_ticket(booking_ref):
 
         if ticket_data["show_info"] is None:
              hour, minute_str = format_time_tuple(show_time_int)
+             base_price_for_gst_calc = base_price if base_price is not None else 0
              ticket_data["show_info"] = {
                  "movie_name": movie_name,
                  "show_type": show_type,
@@ -953,27 +957,53 @@ def show_ticket(booking_ref):
 
         seat_class = 'Standard'
         seat_display_no = seat_db_no
-        seat_price = base_price if base_price is not None else 0
+        ticket_pre_tax_price = base_price if base_price is not None else 0
         if seat_db_no > GOLD_SEAT_THRESHOLD:
              seat_class = 'Gold'
              seat_display_no = seat_db_no - GOLD_SEAT_THRESHOLD
              if base_price is not None:
-                 seat_price = int(base_price * 1.5)
+                ticket_pre_tax_price = int(base_price * 1.5)
 
         seat_display_str = f"{seat_code_display}({seat_class[0]})"
         ticket_info = {
             "ticket_no": ticket_no,
             "seat_display": f"{seat_code_display} ({seat_class})",
-            "price": seat_price,
+            "price": ticket_pre_tax_price,
             "class": seat_class
         }
         ticket_data["tickets"].append(ticket_info)
         qr_code_content_list.append(f"T{ticket_no}:S-{seat_display_str}")
 
-        total_booking_price += seat_price
+        total_pre_tax_price += ticket_pre_tax_price
         processed_ticket_nos.add(ticket_no)
 
-    ticket_data["total_price"] = total_booking_price
+    cgst_rate = 0
+    sgst_rate = 0
+    cgst_amount = 0
+    sgst_amount = 0
+    final_total_price = total_pre_tax_price
+
+    if base_price_for_gst_calc is not None:
+         if base_price_for_gst_calc > 100:
+             gst_rate_total = 0.18
+         else:
+             gst_rate_total = 0.12
+
+         cgst_rate = gst_rate_total / 2
+         sgst_rate = gst_rate_total / 2
+
+         cgst_amount = round(total_pre_tax_price * cgst_rate, 2)
+         sgst_amount = round(total_pre_tax_price * sgst_rate, 2)
+         final_total_price = round(total_pre_tax_price + cgst_amount + sgst_amount, 2)
+
+    ticket_data["pricing_info"] = {
+        "pre_tax_total": round(total_pre_tax_price, 2),
+        "cgst_rate_percent": int(cgst_rate * 100),
+        "cgst_amount": cgst_amount,
+        "sgst_rate_percent": int(sgst_rate * 100),
+        "sgst_amount": sgst_amount,
+        "final_total": final_total_price
+    }
 
     if ticket_data["show_info"]:
         qr_data_string = f"Ref:{booking_ref}\n"
