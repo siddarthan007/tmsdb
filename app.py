@@ -914,7 +914,7 @@ def getBookingsByDate():
 
     bookings_formatted = []
     for row in results:
-        booking_ref, cust_name, cust_phone, show_id, movie_name, time_int, hall_name, num_tickets = row
+        booking_ref, cust_name, cust_phone, movie_name, time_int, show_id, hall_name, num_tickets = row
         hour, minute_str = format_time_tuple(time_int)
         show_time_formatted = f"{hour}:{minute_str}" if hour is not None else "N/A"
         bookings_formatted.append({
