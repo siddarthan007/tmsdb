@@ -8,6 +8,9 @@ DROP TABLE IF EXISTS types;
 DROP TABLE IF EXISTS price_listing;
 DROP TABLE IF EXISTS movies;
 DROP TABLE IF EXISTS halls;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS customers;
+DROP TABLE IF EXISTS bookings;
 DROP TRIGGER IF EXISTS set_show_price_on_insert;
 DROP PROCEDURE IF EXISTS delete_old_records;
 
@@ -50,18 +53,6 @@ CREATE TABLE shows (
     FOREIGN KEY (price_id) REFERENCES price_listing(price_id) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE booked_tickets (
-    ticket_no INT PRIMARY KEY,
-    show_id INT NOT NULL,
-    seat_no INT NOT NULL,
-    customer_name VARCHAR(100) NULL,
-    customer_phone VARCHAR(20) NULL,
-    booking_ref VARCHAR(20) NULL,
-    FOREIGN KEY (show_id) REFERENCES shows(show_id) ON DELETE CASCADE,
-    UNIQUE KEY `unique_show_seat` (`show_id`, `seat_no`),
-    INDEX `idx_booking_ref` (`booking_ref`)
-);
-
 CREATE TABLE types (
     movie_id INT PRIMARY KEY,
     type1 VARCHAR(3),
@@ -69,6 +60,42 @@ CREATE TABLE types (
     type3 VARCHAR(3),
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id) ON DELETE CASCADE
 );
+
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE customers (
+    customer_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    customer_phone VARCHAR(20) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bookings (
+    booking_ref VARCHAR(20) PRIMARY KEY,
+    customer_id INT NOT NULL,
+    booking_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+CREATE TABLE booked_tickets (
+    ticket_no INT PRIMARY KEY,
+    show_id INT NOT NULL,
+    seat_no INT NOT NULL,
+    booking_ref VARCHAR(20) NULL,
+    FOREIGN KEY (show_id) REFERENCES shows(show_id) ON DELETE CASCADE,
+    FOREIGN KEY (booking_ref) REFERENCES bookings(booking_ref) ON DELETE CASCADE,
+    UNIQUE KEY `unique_show_seat` (`show_id`, `seat_no`),
+    INDEX `idx_booking_ref` (`booking_ref`)
+);
+
+INSERT INTO users (user_id, username, password_hash, role) VALUES
+(1, 'cashier', 'scrypt:32768:8:1$xLrcHhakt8JABBCX$cdd37c183dd10698a17f31683fb4630d94d5a185c4e6f2bf9eb313d1d0d9ff25a473771c466918ae0180bfd9d19d58f65ae4c46e222201b7b81d4fe1295a682b', 'cashier'), 
+(2, 'manager', 'scrypt:32768:8:1$a2vR5ywzz5K38sBA$07d2c2bb6f40eb25d519fda46f139f8fd636189b7bd0bdcad059ef6a16ef9268ffbe6e6bc41257040fe05b63015474889e42ba76e0a91b47e1b1517e8cd0e9ee', 'manager'); 
 
 INSERT INTO halls (hall_id, hall_name, class, no_of_seats) VALUES
 (1, 'Audi 1', 'gold', 35),

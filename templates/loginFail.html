@@ -1,14 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Login Failed - Durbar Cinemax{% endblock %}
+
+{% block content %}
 <div class="columns is-centered">
-    <div class="column is-half has-text-centered"> <div class="notification is-danger is-light">
-        <p class="has-text-weight-semibold is-size-5">Login Failed</p> <p>Incorrect Credentials</p>
-      </div>
-  
-      <div class="field mt-4"> <div class="control">
-          <button onclick="location.href='./'" class="button is-warning">
-            Try Again
-          </button>
+    <div class="column is-half has-text-centered">
+        <div class="box login-failure-box"> <div class="notification is-danger is-light">
+                <p class="has-text-weight-semibold is-size-5">Login Failed</p>
+                <p>{{ message | default('Incorrect credentials or user not found.') }}</p>
+            </div>
+
+            <div class="field mt-4">
+                <div class="control">
+                    <button onclick="location.href='{{ url_for('renderLoginOrIndex') }}'" class="button is-warning">
+                        Try Again
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
-  
     </div>
-  </div>
+</div>
+{% endblock %}

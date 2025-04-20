@@ -22,76 +22,6 @@ function logoutUser() {
     window.location.href = '/logout';
 }
 
-function login() {
-    selectedSeats = [];
-    
-    if (username === null) {
-        username = $("input[name='username']").val();
-        password = $("input[name='password']").val();
-    }
-
-    if (!username || !password) {
-        $('.module .notification').remove();
-        $('.module').prepend(createNotification('Please enter username and password.'));
-        username = null;
-        password = null;
-        return;
-    }
-
-    var formData = {
-        'username': username,
-        'password': password
-    };
-
-    $.ajax({
-        type: 'POST',
-        url: '/login',
-        data: formData,
-        success: function(response) {
-            $('.module').html(response);
-            if (response.includes('id="datepicker-cashier"') || response.includes('id="options"')) {
-                $('.module').addClass('box p-5');
-                $('.login-header').addClass('title is-4 has-text-centered mb-5');
-                if ($('#datepicker-cashier').length) {
-                     if (!$('#datepicker-cashier').hasClass('input')) {
-                         $('#datepicker-cashier').addClass('input');
-                    }
-                    $('#datepicker-cashier').pickadate({
-                        min: new Date(),
-                        formatSubmit: 'yyyy/mm/dd',
-                        hiddenName: true,
-                        klass: { input: 'input' },
-                        onSet: function(event) {
-                            if (event.select) {
-                                $('#datepicker-cashier').prop('disabled', true);
-                                getMoviesShowingOnDate(this.get('select', 'yyyy/mm/dd'));
-                            }
-                        }
-                    });
-                    if (!$('#datepicker-cashier').parent().hasClass('control')) {
-                        $('#datepicker-cashier').wrap('<div class="control"></div>').parent().wrap('<div class="field"><label class="label">Select Date</label></div>');
-                    }
-                }
-                 if ($('#options').length) {
-                     $('#options').addClass('mt-5 pt-5 border-top');
-                     $('#options h3').addClass('title is-5 mb-4');
-                     $('#options .buttons').addClass('is-centered');
-                 }
-            } else {
-                 username = null;
-                 password = null;
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.error("Login AJAX error:", textStatus, errorThrown);
-            $('.module .notification').remove();
-            $('.module').prepend(createNotification('Login failed due to a network or server error. Please try again later.'));
-            username = null;
-            password = null;
-        }
-    });
-}
-
 function getMoviesShowingOnDate(mdate) {
     date = mdate;
     console.log("Fetching movies for date:", date);
@@ -127,7 +57,7 @@ function selectMovie(movID, mtype) {
             'type': type
         },
         success: function(response) {
-            $('#movies-on-date button').prop('disabled', true);
+            $('#movies-on-date button');
             $('#timings-for-movie').html(response);
             $('#timings-for-movie button').addClass('button is-primary m-1');
         },
@@ -155,7 +85,7 @@ function selectTiming(mtime) {
         },
         success: function(response) {
             if (response && response.showID) {
-                $('#timings-for-movie button').prop('disabled', true);
+                $('#timings-for-movie button');
                 showID = response.showID;
                 console.log("Got showID:", showID);
                 getSeats();
@@ -187,7 +117,7 @@ function getSeats() {
             $('#available-seats').html(response);
             $('#available-seats .seat-button').addClass('button m-1 is-small');
             $('#available-seats .seat-available').addClass('is-outlined is-primary');
-            $('#available-seats .seat-booked').addClass('is-danger').prop('disabled', true);
+            $('#available-seats .seat-booked').addClass('is-danger');
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.error("getSeats AJAX error:", textStatus, errorThrown);
@@ -268,7 +198,7 @@ function confirmBooking() {
         return;
     }
 
-    $('#confirm-booking-button').prop('disabled', true).addClass('is-loading');
+    $('#confirm-booking-button').addClass('is-loading');
 
     $.ajax({
         type: 'POST',
@@ -281,7 +211,7 @@ function confirmBooking() {
             'customerPhone': customerPhone
         }),
         success: function(response) {
-             $('#available-seats button').prop('disabled', true);
+             $('#available-seats button');
             $('#price-and-confirm').html(response);
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -301,7 +231,7 @@ function confirmBooking() {
 function viewBookedTickets() {
     console.log("Manager action: View Booked Tickets");
     $('#manager-dynamic-1, #manager-dynamic-2, #manager-dynamic-3, #manager-dynamic-4, #manager-dynamic-5').html('');
-    $('#options button').prop('disabled', true);
+    $('#options button');
     $('#options button.is-info').removeClass('is-info').addClass('is-light');
     $('#options button[onclick="viewBookedTickets()"]').removeClass('is-light').addClass('is-info');
     $('#manager-dynamic-1').html(`
@@ -325,7 +255,7 @@ function viewBookedTickets() {
         onSet: function(event) {
             if (event.select) {
                 const selectedDate = this.get('select', 'yyyy/mm/dd');
-                $('#datepicker-manager-view-bookings').prop('disabled', true);
+                $('#datepicker-manager-view-bookings');
                 fetchGroupedBookings(selectedDate);
             }
         },
@@ -389,7 +319,7 @@ function selectShow(mshowID) {
         url: '/getBookedWithShowID',
         data: { 'showID': showID },
         success: function(response) {
-            $('#manager-dynamic-2 button').prop('disabled', true);
+            $('#manager-dynamic-2 button');
             $('#manager-dynamic-3').html(response);
             $('#manager-dynamic-3 table').addClass('table is-bordered is-striped is-narrow is-hoverable is-fullwidth');
         },
@@ -403,7 +333,7 @@ function selectShow(mshowID) {
 
 function insertMovie() {
     console.log("Manager action: Insert New Movie");
-    $('#options button').prop('disabled', true);
+    $('#options button');
     $('#options button.is-info').removeClass('is-info').addClass('is-light');
     $('#manager-dynamic-1').html('<progress class="progress is-small is-info" max="100">15%</progress>');
 
@@ -522,7 +452,7 @@ function filledMovieForm() {
                 'endShowing': endShowing
             },
             success: function(response) {
-                $('#manager-dynamic-1 input, #manager-dynamic-1 select, #manager-dynamic-1 button').prop('disabled', true);
+                $('#manager-dynamic-1 input, #manager-dynamic-1 select, #manager-dynamic-1 button');
                 $form.find('button').removeClass('is-loading');
                 $('#manager-dynamic-2').html(response);
             },
@@ -538,7 +468,7 @@ function filledMovieForm() {
 
 function createShow() {
     console.log("Manager action: Create Show");
-    $('#options button').prop('disabled', true);
+    $('#options button');
     $('#options button.is-info').removeClass('is-info').addClass('is-light');
     $('#manager-dynamic-1').html(`
         <div class="box">
@@ -619,7 +549,7 @@ function getValidMovies() {
         return;
     }
     console.log("Finding movies available on", showDate, "at", showTime);
-    $('#manager-dynamic-1 input, #manager-dynamic-1 button').prop('disabled', true);
+    $('#manager-dynamic-1 input, #manager-dynamic-1 button');
     $('#manager-dynamic-1 button').addClass('is-loading');
     $('#manager-dynamic-2').html('<progress class="progress is-small is-info" max="100">15%</progress>');
 
@@ -647,8 +577,10 @@ function getValidMovies() {
 function selectShowMovie(movID, availableTypes) {
     movieID = movID;
     console.log("Manager: Selected movie", movieID, "Available types:", availableTypes);
-    $('#manager-dynamic-2 button').prop('disabled', true);
-    let typesHtml = '<h4 class="title is-5 mt-4 mb-3">Select Movie Type For Show</h4><div class="field"><div class="control">';
+    $('#manager-dynamic-2 button');
+    let typesHtml = '<h4 class="title is-5 mt-4 mb-3 has-text-centered">Select Movie Type For Show</h4>'; 
+    typesHtml += '<div class="buttons is-centered mt-3">';
+
     availableTypes.split(' ').forEach(function(t) {
         if (t) {
             typesHtml += `<button class="button is-success" onclick="selectShowType('${t}')">${t}</button>`;
@@ -673,7 +605,7 @@ function selectShowType(t) {
             'movieID': movieID
         },
         success: function(response) {
-            $('#manager-dynamic-3 button').prop('disabled', true);
+            $('#manager-dynamic-3 button');
             $('#manager-dynamic-4').html(response);
             $('#manager-dynamic-4 button').addClass('button is-primary m-1');
         },
@@ -688,7 +620,7 @@ function selectShowType(t) {
 function selectShowHall(hallID) {
     console.log("Manager: Selected Hall", hallID, "for scheduling show.");
     $('#manager-dynamic-5').html('<progress class="progress is-small is-info" max="100">15%</progress>');
-    $('#manager-dynamic-4 button').prop('disabled', true).addClass('is-loading');
+    $('#manager-dynamic-4 button').addClass('is-loading');
 
     $.ajax({
         type: 'POST',
@@ -714,7 +646,7 @@ function selectShowHall(hallID) {
 
 function alterPricing() {
     console.log("Manager action: Alter Pricing");
-    $('#options button').prop('disabled', true);
+    $('#options button');
     $('#options button.is-info').removeClass('is-info').addClass('is-light');
     $('#manager-dynamic-1').html('<progress class="progress is-small is-info" max="100">15%</progress>');
 
@@ -739,7 +671,7 @@ function alterPricing() {
 function alterPrice(mpriceID) {
     priceID = mpriceID;
     console.log("Manager: Altering price for priceID:", priceID);
-    $('#manager-dynamic-1 button').prop('disabled', true);
+    $('#manager-dynamic-1 button');
     $('#manager-dynamic-2').html(`
         <div class="box mt-4">
              <h5 class="title is-6 mb-3">Set New Price for ID ${priceID}</h5>
@@ -773,7 +705,7 @@ function changePrice() {
         $('#manager-dynamic-3').html(createNotification('Please enter a valid, non-negative price.', 'is-warning'));
         return;
     }
-    $('#manager-dynamic-2 input, #manager-dynamic-2 button').prop('disabled', true);
+    $('#manager-dynamic-2 input, #manager-dynamic-2 button');
     $('#manager-dynamic-2 button').addClass('is-loading');
 
     $.ajax({

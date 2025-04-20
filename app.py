@@ -3,6 +3,7 @@ import mysql.connector
 from dotenv import dotenv_values
 from mysql.connector import Error
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 from random import randint
 import logging
 import os
@@ -43,7 +44,7 @@ def format_time_tuple(time_int):
 def generate_id():
     return randint(1_000_000, 9_999_999)
 
-def runQuery(query, params=None, fetch_one=False):
+def runQuery(query, params=None, fetch_one=False, last_row_id=False):
     results = None
     connection = None
     cursor = None
@@ -64,6 +65,8 @@ def runQuery(query, params=None, fetch_one=False):
             if cursor.description:
                 if fetch_one:
                     results = cursor.fetchone()
+                elif last_row_id:
+                    results = cursor.lastrowid
                 else:
                     results = cursor.fetchall()
                 logging.info(f"Query yielded results: {'Yes' if results else 'No'}")
@@ -93,7 +96,7 @@ def login_required(role="any"):
         def decorated_function(*args, **kwargs):
             if 'user_role' not in session:
                 logging.warning("Unauthorized access attempt to {request.path} detected.")
-                return redirect(url_for('renderLoginPage'))
+                return redirect(url_for('renderLoginOrIndex'))
             if role != "any" and session.get('user_role') != role:
                 return "Access Denied: You do not have permission to access this page.", 403
             return f(*args, **kwargs)
@@ -101,8 +104,22 @@ def login_required(role="any"):
     return decorator
 
 @app.route('/')
-def renderLoginPage():
-    return render_template('login.html')
+def renderLoginOrIndex():
+    if 'user_role' in session:
+        user_role = session['user_role']
+        if user_role == 'cashier':
+            logging.info(f"Session found for role '{user_role}'. Rendering cashier dashboard.")
+            return render_template('cashier.html')
+        elif user_role == 'manager':
+            logging.info(f"Session found for role '{user_role}'. Rendering manager dashboard.")
+            return render_template('manager.html')
+        else:
+            logging.warning(f"Session found with unknown role: '{user_role}'. Clearing session.")
+            session.clear()
+            return render_template('login.html', message="Invalid session role. Please log in again.")
+    else:
+        logging.info("No active session found. Rendering login page.")
+        return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
 def verifyAndRenderRespective():
@@ -110,31 +127,34 @@ def verifyAndRenderRespective():
     password = request.form.get('password')
     if not username or not password:
         return render_template('loginFail.html', message="Username or password cannot be empty.")
-    try:
-        if username == 'cashier' and password == 'cashier':
-            session['username'] = username
-            session['user_role'] = 'cashier'
-            logging.info(f"User {username} logged in as cashier.")
-            return render_template('cashier.html')
-        elif username == 'manager' and password == 'manager':
-            session['username'] = username
-            session['user_role'] = 'manager'
-            logging.info(f"User {username} logged in as cashier.")
-            return render_template('manager.html')
+    
+    query = "SELECT user_id, username, password_hash, role FROM users WHERE username = %s"
+    user_data = runQuery(query, (username,), fetch_one=True)
+
+    if user_data:
+        user_id, db_username, db_password_hash, user_role = user_data
+        if check_password_hash(db_password_hash, password):
+            session.clear()
+            session['user_id'] = user_id
+            session['username'] = db_username
+            session['user_role'] = user_role
+            logging.info(f"User {db_username} logged in as {user_role}.")
+
+            return redirect(url_for('renderLoginOrIndex'))
         else:
-            session.pop('username', None)
-            session.pop('user_role', None)
-            return render_template('loginFail.html', message="Invalid username or password.")
-    except Exception as e:
-        logging.error(f"Error during login verification: {e}")
-        return render_template('loginFail.html', message="An internal server error occurred during login.")
+            logging.warning(f"Failed login attempt for user {username}: Incorrect password.")
+            return render_template('loginFail.html', message="Incorrect username or password.")
+    else:
+        logging.warning(f"Failed login attempt for user {username}: User not found.")
+        return render_template('loginFail.html', message="User not found.")
     
 @app.route('/logout')
 @login_required(role="any")
 def logout():
+    session.pop('user_id', None)
     session.pop('user_role', None)
     session.pop('username', None)
-    return redirect(url_for('renderLoginPage'))
+    return redirect(url_for('renderLoginOrIndex'))
 
 @app.route('/getMoviesShowingOnDate', methods=['POST'])
 @login_required(role="cashier")
@@ -334,16 +354,54 @@ def createBooking():
 
     if not all([show_id_str, selected_seats, customer_name, customer_phone]):
         return render_bulma_notification('Missing booking information (Show ID or Selected Seats).', 'is-warning')
+    
+    customer_id = None
+    
     try:
-        show_id = int(show_id_str)
+        customer_query = "SELECT customer_id FROM customers WHERE customer_phone = %s"
+        customer_result = runQuery(customer_query, (customer_phone,), fetch_one=True)
+
+        if customer_result:
+            customer_id = customer_result[0]
+            update_customer_query = "UPDATE customers SET customer_name = %s WHERE customer_id = %s AND customer_name != %s"
+            runQuery(update_customer_query, (customer_name, customer_id, customer_name))
+            logging.info(f"Found existing customer ID: {customer_id} for phone {customer_phone}")
+        else:
+            insert_customer_query = "INSERT INTO customers (customer_name, customer_phone) VALUES (%s, %s)"
+            runQuery(insert_customer_query, (customer_name, customer_phone))
+            customer_id_query = "SELECT customer_id FROM customers WHERE customer_phone = %s"
+            customer_id_result = runQuery(customer_id_query, (customer_phone,), fetch_one=True)
+            if customer_id_query:
+                customer_id = customer_id_result[0]
+                logging.info(f"Created new customer ID: {customer_id} for {customer_name}, {customer_phone}")
+            else:
+                return render_bulma_notification(f'Failed to retrieve customer ID after inserting customer with phone {customer_phone}.', 'is-warning')
+
         booking_ref = str(generate_id())
 
+        attempts = 0
+        max_attempts = 5
+        while attempts < max_attempts:
+            check_booking_query = "SELECT booking_ref FROM bookings WHERE booking_ref = %s"
+            result = runQuery(check_booking_query, (booking_ref,), fetch_one=True)
+            if not result:
+                break
+            logging.warning(f"Booking reference collision for {booking_ref}, retrying...")
+            attempts += 1
+        else:
+            return render_bulma_notification('Failed ro generate unique booking reference.', 'is-error')
+        
+        insert_booking_query = "INSERT INTO bookings (booking_ref, customer_id) VALUES (%s, %s)"
+        runQuery(insert_booking_query, (booking_ref, customer_id))
+        logging.info(f"Created booking record with ref: {booking_ref} for customer ID: {customer_id}")
+
         booked_ticket_details = []
+        show_id = int(show_id_str)
 
         query = """
             INSERT INTO booked_tickets
-            (ticket_no, show_id, seat_no, customer_name, customer_phone, booking_ref)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (ticket_no, show_id, seat_no, booking_ref)
+            VALUES (%s, %s, %s, %s)
         """
 
         for seat in selected_seats:
@@ -370,8 +428,6 @@ def createBooking():
                     ticket_no,
                     show_id,
                     seat_db_no,
-                    customer_name if customer_name else None,
-                    customer_phone if customer_phone else None,
                     booking_ref
             )
             logging.info(f"Attempting to insert ticket: {params}")
@@ -830,21 +886,23 @@ def getBookingsByDate():
 
     query = """
         SELECT
-            bt.booking_ref,
-            bt.customer_name,
-            bt.customer_phone,
-            s.show_id,
-            m.movie_name,
-            s.time,
-            h.hall_name,
-            COUNT(bt.ticket_no) as num_tickets
-        FROM booked_tickets bt
-        JOIN shows s ON bt.show_id = s.show_id
-        JOIN movies m ON s.movie_id = m.movie_id
-        JOIN halls h ON s.hall_id = h.hall_id -- Join still needed for name
-        WHERE s.Date = %s
-        GROUP BY bt.booking_ref, bt.customer_name, bt.customer_phone, s.show_id, m.movie_name, s.time, h.hall_name
-        ORDER BY s.time, bt.booking_ref
+            b.booking_ref,         
+            c.customer_name,      
+            c.customer_phone,     
+            m.movie_name,          
+            s.time,                
+            s.show_id,             
+            h.hall_name,           
+            COUNT(bt.ticket_no) as num_tickets 
+        FROM bookings b            
+        JOIN customers c ON b.customer_id = c.customer_id 
+        JOIN booked_tickets bt ON b.booking_ref = bt.booking_ref 
+        JOIN shows s ON bt.show_id = s.show_id         
+        JOIN movies m ON s.movie_id = m.movie_id         
+        JOIN halls h ON s.hall_id = h.hall_id            
+        WHERE s.Date = %s         
+        GROUP BY b.booking_ref, c.customer_name, c.customer_phone, s.show_id, m.movie_name, s.time, h.hall_name
+        ORDER BY s.time, b.booking_ref
     """
 
     results = runQuery(query, (show_date_sql,))
@@ -900,18 +958,21 @@ def db_no_to_seat_code(seat_db_no):
 def show_ticket(booking_ref):
     query = """
         SELECT
-            bt.ticket_no, bt.seat_no, bt.customer_name, bt.customer_phone,
+            bt.ticket_no, bt.seat_no,
+            b.booking_time,
+            c.customer_name, c.customer_phone,
             s.Date, s.time, s.type as show_type, s.show_id,
             m.movie_name, m.length,
             h.hall_id, h.hall_name,
             pl.price as base_standard_price
         FROM booked_tickets bt
+        JOIN bookings b ON bt.booking_ref = b.booking_ref
+        JOIN customers c ON b.customer_id = c.customer_id
         JOIN shows s ON bt.show_id = s.show_id
         JOIN movies m ON s.movie_id = m.movie_id
         JOIN halls h ON s.hall_id = h.hall_id
         LEFT JOIN price_listing pl ON s.price_id = pl.price_id
         WHERE bt.booking_ref = %s
-        GROUP BY bt.ticket_no, bt.seat_no, bt.customer_name, bt.customer_phone, s.Date, s.time, s.type, s.show_id, m.movie_name, m.length, h.hall_id, h.hall_name, pl.price
         ORDER BY bt.seat_no
     """
 
@@ -933,8 +994,7 @@ def show_ticket(booking_ref):
     base_price_for_gst_calc = None
 
     for row in results:
-        (ticket_no, seat_db_no, cust_name, cust_phone, show_date, show_time_int,
-         show_type, show_id, movie_name, movie_len, hall_id, hall_name, base_price) = row
+        (ticket_no, seat_db_no, booking_time, cust_name, cust_phone, show_date, show_time_int, show_type, show_id, movie_name, movie_len, hall_id, hall_name, base_price) = row
 
         if ticket_no in processed_ticket_nos:
             continue
@@ -950,17 +1010,15 @@ def show_ticket(booking_ref):
                  "hall_name": hall_name,
                  "customer_name": cust_name,
                  "customer_phone": cust_phone,
-                 "show_id": show_id
+                 "show_id": show_id,
+                 "booking_time": booking_time.strftime('%Y-%m-%d %H:%M:%S') if booking_time else "N/A"
              }
 
         seat_code_display = db_no_to_seat_code(seat_db_no)
-
         seat_class = 'Standard'
-        seat_display_no = seat_db_no
         ticket_pre_tax_price = base_price if base_price is not None else 0
         if seat_db_no > GOLD_SEAT_THRESHOLD:
              seat_class = 'Gold'
-             seat_display_no = seat_db_no - GOLD_SEAT_THRESHOLD
              if base_price is not None:
                 ticket_pre_tax_price = int(base_price * 1.5)
 
