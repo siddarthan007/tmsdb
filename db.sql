@@ -17,11 +17,17 @@ DROP PROCEDURE IF EXISTS delete_old_records;
 SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE halls (
-    hall_id INT NOT NULL,
-    hall_name VARCHAR(50) NOT NULL,
-    class VARCHAR(10) NOT NULL,
-    no_of_seats INT NOT NULL,
-    PRIMARY KEY (hall_id, class)
+    hall_id INT PRIMARY KEY,
+    hall_name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE hall_classes (
+     hall_class_id INT AUTO_INCREMENT PRIMARY KEY,
+     hall_id INT NOT NULL,
+     class VARCHAR(10) NOT NULL,
+     no_of_seats INT NOT NULL,
+     FOREIGN KEY (hall_id) REFERENCES halls(hall_id) ON DELETE CASCADE,
+     UNIQUE KEY idx_hall_class_unique (hall_id, class)
 );
 
 CREATE TABLE movies (
@@ -97,13 +103,18 @@ INSERT INTO users (user_id, username, password_hash, role) VALUES
 (1, 'cashier', 'scrypt:32768:8:1$xLrcHhakt8JABBCX$cdd37c183dd10698a17f31683fb4630d94d5a185c4e6f2bf9eb313d1d0d9ff25a473771c466918ae0180bfd9d19d58f65ae4c46e222201b7b81d4fe1295a682b', 'cashier'), 
 (2, 'manager', 'scrypt:32768:8:1$a2vR5ywzz5K38sBA$07d2c2bb6f40eb25d519fda46f139f8fd636189b7bd0bdcad059ef6a16ef9268ffbe6e6bc41257040fe05b63015474889e42ba76e0a91b47e1b1517e8cd0e9ee', 'manager'); 
 
-INSERT INTO halls (hall_id, hall_name, class, no_of_seats) VALUES
-(1, 'Audi 1', 'gold', 35),
-(1, 'Audi 1', 'standard', 75),
-(2, 'Audi 2', 'gold', 27),
-(2, 'Audi 2', 'standard', 97),
-(3, 'Audi 3', 'gold', 26),
-(3, 'Audi 3', 'standard', 98);
+INSERT INTO halls (hall_id, hall_name) VALUES
+(1, 'Audi 1'),
+(2, 'Audi 2'),
+(3, 'Audi 3');
+
+INSERT INTO hall_classes (hall_id, class, no_of_seats) VALUES
+(1, 'gold', 35),
+(1, 'standard', 75),
+(2, 'gold', 27),
+(2, 'standard', 97),
+(3, 'gold', 26),
+(3, 'standard', 98);
 
 INSERT INTO price_listing (price_id, type, day, price) VALUES
 (1, '2D', 'Monday', 210), (2, '3D', 'Monday', 295), (3, '4DX', 'Monday', 380),

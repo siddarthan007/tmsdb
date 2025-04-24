@@ -236,11 +236,12 @@ def getSeating():
         return render_bulma_notification('Missing Show ID.', 'is-warning')
 
     query_hall_info = """
-        SELECT h.class, h.no_of_seats
+        SELECT hc.class, hc.no_of_seats
         FROM shows s
-        JOIN halls h ON s.hall_id = h.hall_id
+        JOIN hall_classes hc ON s.hall_id = hc.hall_id
         WHERE s.show_id = %s
     """
+    
     query_booked = """
         SELECT seat_no FROM booked_tickets
         WHERE show_id = %s
@@ -893,7 +894,7 @@ def getBookingsByDate():
             s.time,                
             s.show_id,             
             h.hall_name,           
-            COUNT(bt.ticket_no) as num_tickets 
+            COUNT(DISTINCT bt.ticket_no) as num_tickets 
         FROM bookings b            
         JOIN customers c ON b.customer_id = c.customer_id 
         JOIN booked_tickets bt ON b.booking_ref = bt.booking_ref 
